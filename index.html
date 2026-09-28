@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Too Fresh To Waste connects cafes, bakeries, and restaurants with customers who want to buy fresh surplus food at discounted prices — saving money and reducing food waste." />
+  <meta name="keywords" content="food waste, surplus food, discounted food, fresh food, bakery, cafe, restaurant, Chandigarh" />
+  <meta property="og:title" content="Too Fresh To Waste — Good Food Deserves Another Chance" />
+  <meta property="og:description" content="Discover fresh surplus food from local cafes, bakeries and restaurants at a fraction of the usual price." />
+  <meta property="og:type" content="website" />
+  <title>Too Fresh To Waste — Good Food Deserves Another Chance</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+<body>
+
+  <!-- ==================== NAVBAR ==================== -->
+  <header id="navbar" class="navbar" role="banner">
+    <div class="container navbar-inner">
+
+      <!-- Logo -->
+      <a href="index.html" class="logo" aria-label="Too Fresh To Waste Home">
+        <div class="logo-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8 2 5 5 5 9c0 2.5 1.2 4.7 3 6.1V20a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-4.9c1.8-1.4 3-3.6 3-6.1 0-4-3-7-7-7zm-1 16v-3h2v3h-2zm3-5.3V17h-4v-4.3A5 5 0 0 1 7 9c0-2.8 2.2-5 5-5s5 2.2 5 5a5 5 0 0 1-3 4.7z"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="brand-name">Too Fresh To Waste</span>
+          <span class="brand-tagline">Save Food · Save Money</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav class="nav-links" role="navigation" aria-label="Main navigation">
+        <a href="#discover" class="nav-link">Discover Food</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#for-businesses" class="nav-link">For Businesses</a>
+      </nav>
+
+      <!-- Desktop Nav Actions -->
+      <div class="nav-actions">
+        <a href="login.html" class="nav-login" id="navLoginBtn">Log In</a>
+        <a href="signup.html" class="btn btn-primary btn-sm" id="navSignupBtn">Sign Up</a>
+      </div>
+
+      <!-- Hamburger -->
+      <button class="hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Nav -->
+  <div class="mobile-nav" id="mobileNav" role="navigation" aria-label="Mobile navigation">
+    <div class="mobile-nav-links">
+      <a href="#discover" class="mobile-nav-link">Discover Food</a>
+      <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
+      <a href="#for-businesses" class="mobile-nav-link">For Businesses</a>
+    </div>
+    <div class="mobile-nav-actions">
+      <a href="login.html" class="btn btn-outline">Log In</a>
+      <a href="signup.html" class="btn btn-primary">Sign Up</a>
+    </div>
+  </div>
+
+  <main id="main">
+
+    <!-- ==================== HERO ==================== -->
+    <section class="hero" aria-labelledby="heroHeadline">
+      <!-- Decorative BG blobs -->
+      <div class="hero-bg-blob hero-bg-blob-1" aria-hidden="true"></div>
+      <div class="hero-bg-blob hero-bg-blob-2" aria-hidden="true"></div>
+
+      <div class="container hero-inner">
+        <!-- Content -->
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="dot" aria-hidden="true"></span>
+            🌱 Food waste, solved.
+          </div>
+
+          <h1 class="hero-headline" id="heroHeadline">
+            Good Food Deserves<br/>
+            <span class="accent">Another Chance.</span>
+          </h1>
+
+          <p class="hero-subtext">
+            Discover fresh food from local cafes, bakeries and restaurants at a fraction of the usual price — and help reduce food waste while you're at it.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#discover" class="btn btn-primary btn-lg" id="heroFindFoodBtn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              Find Food Near Me
+            </a>
+            <a href="#for-businesses" class="btn btn-outline btn-lg" id="heroBusinessBtn">
+              List Your Surplus Food
+            </a>
+          </div>
+
+          <div class="hero-social-proof">
+            <div class="hero-avatars" aria-hidden="true">
+              <div class="hero-avatar">AR</div>
+              <div class="hero-avatar">MK</div>
+              <div class="hero-avatar">PS</div>
+              <div class="hero-avatar">TG</div>
+            </div>
+            <p class="hero-social-text">
+              <strong>2,400+ meals</strong> rescued this month
+            </p>
+          </div>
+        </div>
+
+        <!-- Visual -->
+        <div class="hero-visual" aria-hidden="true">
+          <!-- Floating Card 1 -->
+          <div class="float-card float-card-1">
+            <div class="float-card-icon green">🥐</div>
+            <div class="float-card-info">
+              <div class="label">Fresh Bakery Box</div>
+              <div class="value">₹149</div>
+              <div class="sub">70% saved · 2 left</div>
+            </div>
+          </div>
+
+          <!-- Main Image -->
+          <div class="hero-image-wrapper">
+            <img
+              src="assets/images/hero_food.jpg"
+              alt="Assorted fresh bakery items including croissants, pastries and muffins"
+              loading="eager"
+              fetchpriority="high"
+            />
+          </div>
+
+          <!-- Floating Card 2 -->
+          <div class="float-card float-card-2">
+            <div class="float-card-icon pink">🎂</div>
+            <div class="float-card-info">
+              <div class="label">Dessert Box</div>
+              <div class="value">₹129</div>
+              <div class="sub">57% saved · Pickup 7PM</div>
+            </div>
+          </div>
+
+          <!-- Floating Card 3 -->
+          <div class="float-card float-card-3">
+            <div class="float-card-icon amber">♻️</div>
+            <div class="float-card-info">
+              <div class="label">Meals Rescued</div>
+              <div class="value">12,450+</div>
+              <div class="sub">and counting!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== DISCOVER / LOCATION ==================== -->
+    <section class="section discover" id="discover" aria-labelledby="discoverHeading">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Near You</span>
+          <h2 class="section-title" id="discoverHeading">Fresh finds near you.</h2>
+          <p class="section-subtitle">Save money. Save food. Discover something delicious.</p>
+        </div>
+
+        <!-- Location Search -->
+        <div class="location-bar" role="search" aria-label="Food discovery search">
+          <div class="location-pin" aria-label="Current location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            Chandigarh
+          </div>
+          <input
+            type="text"
+            class="location-input"
+            id="locationSearch"
+            placeholder="Search cafes, bakeries, restaurants..."
+            aria-label="Search cafes, bakeries, restaurants"
+          />
+          <button class="location-search-btn" aria-label="Search" id="locationSearchBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Food Cards Grid -->
+        <div class="food-grid">
+
+          <!-- Card 1 -->
+          <article class="food-card reveal" aria-label="Bakery Surprise Box listing">
+            <div class="food-card-image">
+              <img
+                src="assets/images/bakery_box.jpg"
+                alt="Assorted freshly baked pastries in a kraft box"
+                loading="lazy"
+              />
+              <span class="food-card-discount" aria-label="63% discount">63% OFF</span>
+              <div class="food-card-availability">
+                <span class="dot" aria-hidden="true"></span>
+                2 left
+              </div>
+            </div>
+            <div class="food-card-body">
+              <p class="food-card-business">The Morning Oven · 0.8 km</p>
+              <h3 class="food-card-title">Bakery Surprise Box</h3>
+              <p class="food-card-desc">Freshly baked goodies — pastries, croissants & more.</p>
+              <div class="food-card-meta">
+                <div class="food-card-meta-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                  </svg>
+                  Pickup 7:30 PM – 9:00 PM
+                </div>
+                <div class="food-card-meta-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  Sector 17, Chandigarh
+                </div>
+              </div>
+              <div class="food-card-footer">
+                <div class="food-card-pricing">
+                  <span class="food-card-price">₹149</span>
+                  <span class="food-card-original">₹399</span>
+                </div>
+                <button class="food-card-btn" id="viewCard1Btn">View Details</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 2 -->
+          <article class="food-card reveal" aria-label="Evening Café Box listing">
+            <div class="food-card-image">
+              <img
+                src="assets/images/cafe_box.jpg"
+                alt="Sandwiches, croissants and pastries on a wooden board"
+                loading="lazy"
+              />
+              <span class="food-card-discount" aria-label="56% discount">56% OFF</span>
+              <div class="food-card-availability">
+                <span class="dot" aria-hidden="true"></span>
+                4 left
+              </div>
+            </div>
+            <div class="food-card-body">
+              <p class="food-card-business">Brew & Bite · 1.2 km</p>
+              <h3 class="food-card-title">Evening Café Box</h3>
+              <p class="food-card-desc">Sandwiches, pastries & more from today's service.</p>
+              <div class="food-card-meta">
+                <div class="food-card-meta-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                  </svg>
+                  Pickup 6:00 PM – 8:00 PM
+                </div>
+                <div class="food-card-meta-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  Sector 35, Chandigarh
+                </div>
+              </div>
+              <div class="food-card-footer">
+                <div class="food-card-pricing">
+                  <span class="food-card-price">₹199</span>
+                  <span class="food-card-original">₹450</span>
+                </div>
+                <button class="food-card-btn" id="viewCard2Btn">View Details</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 3 -->
+          <article class="food-card reveal" aria-label="Fresh Dessert Box listing">
+            <div class="food-card-image">
+              <img
+                src="assets/images/dessert_box.jpg"
+                alt="Assorted fresh desserts including macarons, brownies and fruit tarts"
+                loading="lazy"
+              />
+              <span class="food-card-discount" aria-label="57% discount">57% OFF</span>
+              <div class="food-card-availability" style="color:#F39C12;">
+                <span class="dot" style="background:#F39C12;" aria-hidden="true"></span>
+                Last 1!
+              </div>
+            </div>
+            <div class="food-card-body">
+              <p class="food-card-business">Sweet Spot Patisserie · 2.1 km</p>
+              <h3 class="food-card-title">Fresh Dessert Box</h3>
+              <p class="food-card-desc">Today's leftover desserts — macarons, tarts & treats.</p>
+              <div class="food-card-meta">
+                <div class="food-card-meta-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                  </svg>
+                  Pickup 8:00 PM – 9:30 PM
+                </div>
+                <div class="food-card-meta-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  Sector 22, Chandigarh
+                </div>
+              </div>
+              <div class="food-card-footer">
+                <div class="food-card-pricing">
+                  <span class="food-card-price">₹129</span>
+                  <span class="food-card-original">₹300</span>
+                </div>
+                <button class="food-card-btn" id="viewCard3Btn">View Details</button>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VALUE PROPOSITION ==================== -->
+    <section class="section value-prop" id="features" aria-labelledby="featuresHeading">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Why It Works</span>
+          <h2 class="section-title" id="featuresHeading">One small choice.<br/>Three big wins.</h2>
+        </div>
+        <div class="features-grid">
+
+          <div class="feature-card reveal">
+            <div class="feature-icon pink" aria-hidden="true">💰</div>
+            <h3 class="feature-card-title">Save Money</h3>
+            <p class="feature-card-text">Get quality food from great places at prices you'll genuinely love. Up to 70% off regular prices.</p>
+          </div>
+
+          <div class="feature-card reveal">
+            <div class="feature-icon green" aria-hidden="true">🌿</div>
+            <h3 class="feature-card-title">Reduce Waste</h3>
+            <p class="feature-card-text">Help perfectly good food find a home instead of a bin. Every box rescued is a step toward a better planet.</p>
+          </div>
+
+          <div class="feature-card reveal">
+            <div class="feature-icon blue" aria-hidden="true">🏪</div>
+            <h3 class="feature-card-title">Support Local</h3>
+            <p class="feature-card-text">Discover and support cafes, bakeries and restaurants around you. Real businesses. Real impact.</p>
+          </div>
+
+          <div class="feature-card reveal">
+            <div class="feature-icon amber" aria-hidden="true">✨</div>
+            <h3 class="feature-card-title">Discover More</h3>
+            <p class="feature-card-text">Try new places and discover food you might otherwise miss. Your new favourite spot might be one box away.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== HOW IT WORKS ==================== -->
+    <section class="section how-it-works" id="how-it-works" aria-labelledby="howHeading">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Simple Process</span>
+          <h2 class="section-title" id="howHeading">How Too Fresh To Waste works</h2>
+          <p class="section-subtitle">From discovery to delicious in three simple steps.</p>
+        </div>
+        <div class="steps-grid">
+          <div class="steps-connector" aria-hidden="true"></div>
+
+          <div class="step-card reveal">
+            <div class="step-number-wrap">
+              <div class="step-number" aria-hidden="true">1</div>
+            </div>
+            <span class="step-icon" aria-hidden="true">🔍</span>
+            <h3 class="step-title">Discover</h3>
+            <p class="step-text">Browse surplus food available from local businesses near you, right now.</p>
+          </div>
+
+          <div class="step-card reveal">
+            <div class="step-number-wrap">
+              <div class="step-number" aria-hidden="true">2</div>
+            </div>
+            <span class="step-icon" aria-hidden="true">🛒</span>
+            <h3 class="step-title">Reserve</h3>
+            <p class="step-text">Choose a food box and reserve it before it's gone. Quick, easy, no hassle.</p>
+          </div>
+
+          <div class="step-card reveal">
+            <div class="step-number-wrap">
+              <div class="step-number" aria-hidden="true">3</div>
+            </div>
+            <span class="step-icon" aria-hidden="true">🎉</span>
+            <h3 class="step-title">Pick Up</h3>
+            <p class="step-text">Visit the business during the pickup window, collect your food, and enjoy.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== FOR BUSINESSES ==================== -->
+    <section class="section for-businesses" id="for-businesses" aria-labelledby="businessHeading">
+      <div class="container">
+        <div class="businesses-inner">
+
+          <div class="businesses-content">
+            <span class="section-label">For Businesses</span>
+            <h2 class="section-title" id="businessHeading">Have food left at the end of the day?</h2>
+            <p class="section-subtitle">Turn surplus food into revenue while reducing waste. Partner with Too Fresh To Waste and reach thousands of hungry, conscious customers.</p>
+
+            <ul class="benefit-list">
+              <li class="benefit-item">
+                <span class="benefit-check" aria-hidden="true">✓</span>
+                Recover revenue from unsold food
+              </li>
+              <li class="benefit-item">
+                <span class="benefit-check" aria-hidden="true">✓</span>
+                Reach new customers in your area
+              </li>
+              <li class="benefit-item">
+                <span class="benefit-check" aria-hidden="true">✓</span>
+                Measurably reduce food waste
+              </li>
+              <li class="benefit-item">
+                <span class="benefit-check" aria-hidden="true">✓</span>
+                Simple inventory & listing management
+              </li>
+              <li class="benefit-item">
+                <span class="benefit-check" aria-hidden="true">✓</span>
+                Flexible pickup windows that fit your schedule
+              </li>
+            </ul>
+
+            <a href="signup.html" class="btn btn-white btn-lg" id="partnerBtn">Partner With Us →</a>
+          </div>
+
+          <!-- Dashboard Mockup -->
+          <div class="dashboard-mockup reveal" role="img" aria-label="Business dashboard preview">
+            <div class="mockup-header">
+              <div class="mockup-dots">
+                <div class="mockup-dot mockup-dot-red"></div>
+                <div class="mockup-dot mockup-dot-yellow"></div>
+                <div class="mockup-dot mockup-dot-green"></div>
+              </div>
+              <span class="mockup-title">Create a Food Listing</span>
+            </div>
+            <div class="mockup-body">
+              <p class="mockup-form-title">🥐 New Surplus Listing</p>
+
+              <div class="mockup-field">
+                <label>Box Name</label>
+                <div class="mockup-input">Bakery Surprise Box</div>
+              </div>
+
+              <div class="mockup-field">
+                <label>Description</label>
+                <div class="mockup-input">Freshly baked pastries, croissants & more</div>
+              </div>
+
+              <div class="mockup-row">
+                <div class="mockup-field">
+                  <label>Price</label>
+                  <div class="mockup-input">₹149</div>
+                </div>
+                <div class="mockup-field">
+                  <label>Quantity</label>
+                  <div class="mockup-input">5 boxes</div>
+                </div>
+              </div>
+
+              <div class="mockup-field">
+                <label>Pickup Window</label>
+                <div class="mockup-input">7:30 PM – 9:00 PM</div>
+              </div>
+
+              <button class="mockup-submit">Publish Listing ✓</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== IMPACT STATS ==================== -->
+    <section class="section impact" id="impact" aria-labelledby="impactHeading">
+      <div class="container">
+        <div class="impact-inner">
+          <span class="section-label">Our Impact</span>
+          <h2 class="section-title" id="impactHeading">Every meal rescued makes a difference.</h2>
+          <p class="section-subtitle">Together, we're building a community where good food never goes to waste.</p>
+
+          <div class="stats-grid">
+
+            <div class="stat-card reveal">
+              <div class="stat-icon" aria-hidden="true">🍽️</div>
+              <div
+                class="stat-value"
+                data-count="12450"
+                data-suffix="+"
+                aria-label="12,450+ meals rescued"
+              >0</div>
+              <div class="stat-label">Meals Rescued</div>
+            </div>
+
+            <div class="stat-card reveal">
+              <div class="stat-icon" aria-hidden="true">🌍</div>
+              <div
+                class="stat-value"
+                data-count="8200"
+                data-suffix=" kg"
+                aria-label="8,200 kg food saved"
+              >0</div>
+              <div class="stat-label">Food Saved from Waste</div>
+            </div>
+
+            <div class="stat-card reveal">
+              <div class="stat-icon" aria-hidden="true">💚</div>
+              <div
+                class="stat-value"
+                data-count="18.4"
+                data-prefix="₹"
+                data-suffix="L"
+                aria-label="₹18.4 lakh value recovered"
+              >0</div>
+              <div class="stat-label">Value Recovered</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TESTIMONIALS ==================== -->
+    <section class="section testimonials" id="testimonials" aria-labelledby="testimonialHeading">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">People Love It</span>
+          <h2 class="section-title" id="testimonialHeading">Heard it from our community.</h2>
+          <p class="section-subtitle">Real stories from customers and businesses making a difference, one box at a time.</p>
+        </div>
+        <div class="testimonials-grid">
+
+          <article class="testimonial-card reveal">
+            <div class="testimonial-stars" aria-label="5 star rating">★★★★★</div>
+            <blockquote class="testimonial-text">
+              "I found a bakery box for ₹149 that easily had ₹400+ worth of food. Everything was incredibly fresh. Genuinely shocked by the quality."
+            </blockquote>
+            <div class="testimonial-author">
+              <div class="author-avatar" aria-hidden="true">AR</div>
+              <div>
+                <div class="author-name">Aarav R.</div>
+                <div class="author-role">Customer · Chandigarh</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="testimonial-card reveal">
+            <div class="testimonial-stars" aria-label="5 star rating">★★★★★</div>
+            <blockquote class="testimonial-text">
+              "Such a simple idea. I get affordable food and feel better knowing it isn't going to waste. The dessert box from last week was amazing."
+            </blockquote>
+            <div class="testimonial-author">
+              <div class="author-avatar" aria-hidden="true">MK</div>
+              <div>
+                <div class="author-name">Mehak K.</div>
+                <div class="author-role">Student · Panjab University</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="testimonial-card reveal">
+            <div class="testimonial-stars" aria-label="5 star rating">★★★★★</div>
+            <blockquote class="testimonial-text">
+              "Too Fresh To Waste helped us turn our end-of-day surplus into real revenue. Setup took 10 minutes. We listed our first box the same evening."
+            </blockquote>
+            <div class="testimonial-author">
+              <div class="author-avatar" aria-hidden="true">PS</div>
+              <div>
+                <div class="author-name">Priya S.</div>
+                <div class="author-role">Owner · The Morning Oven Café</div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== FINAL CTA ==================== -->
+    <section class="section final-cta" id="cta" aria-labelledby="ctaHeading">
+      <div class="container">
+        <span class="section-label">Ready to Start?</span>
+        <h2 class="section-title" id="ctaHeading">Don't waste it.<br/>Taste it.</h2>
+        <p class="section-subtitle">Your next great meal might be something that almost got thrown away.</p>
+        <div class="final-cta-actions">
+          <a href="#discover" class="btn btn-primary btn-lg" id="ctaDiscoverBtn">
+            🍽️ Discover Food
+          </a>
+          <a href="signup.html" class="btn btn-outline btn-lg" id="ctaSignupBtn">
+            Join Too Fresh To Waste
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-top">
+
+        <!-- Brand -->
+        <div class="footer-brand">
+          <div class="logo">
+            <div class="logo-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8 2 5 5 5 9c0 2.5 1.2 4.7 3 6.1V20a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-4.9c1.8-1.4 3-3.6 3-6.1 0-4-3-7-7-7zm-1 16v-3h2v3h-2zm3-5.3V17h-4v-4.3A5 5 0 0 1 7 9c0-2.8 2.2-5 5-5s5 2.2 5 5a5 5 0 0 1-3 4.7z"/>
+              </svg>
+            </div>
+            <div class="logo-text">
+              <span class="brand-name">Too Fresh To Waste</span>
+              <span class="brand-tagline">Save Food · Save Money</span>
+            </div>
+          </div>
+          <p class="footer-tagline">Good food deserves another chance. Connecting surplus food with hungry people.</p>
+          <div class="footer-social" aria-label="Social media links">
+            <a href="#" class="social-link" aria-label="Instagram">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </a>
+            <a href="#" class="social-link" aria-label="LinkedIn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+            <a href="#" class="social-link" aria-label="X (Twitter)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Discover -->
+        <div class="footer-col">
+          <h3 class="footer-col-title">Discover</h3>
+          <ul class="footer-links">
+            <li><a href="#discover" class="footer-link">Browse Food</a></li>
+            <li><a href="#discover" class="footer-link">Nearby</a></li>
+            <li><a href="#how-it-works" class="footer-link">How It Works</a></li>
+          </ul>
+        </div>
+
+        <!-- Businesses -->
+        <div class="footer-col">
+          <h3 class="footer-col-title">Businesses</h3>
+          <ul class="footer-links">
+            <li><a href="signup.html" class="footer-link">Partner With Us</a></li>
+            <li><a href="login.html" class="footer-link">Business Login</a></li>
+            <li><a href="#" class="footer-link">Business Resources</a></li>
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div class="footer-col">
+          <h3 class="footer-col-title">Company</h3>
+          <ul class="footer-links">
+            <li><a href="#" class="footer-link">About</a></li>
+            <li><a href="#" class="footer-link">Contact</a></li>
+            <li><a href="#" class="footer-link">Careers</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div class="footer-col">
+          <h3 class="footer-col-title">Legal</h3>
+          <ul class="footer-links">
+            <li><a href="#" class="footer-link">Privacy Policy</a></li>
+            <li><a href="#" class="footer-link">Terms of Service</a></li>
+            <li><a href="#" class="footer-link">Refund Policy</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 Too Fresh To Waste. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="#" class="footer-bottom-link">Privacy</a>
+          <a href="#" class="footer-bottom-link">Terms</a>
+          <a href="#" class="footer-bottom-link">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
