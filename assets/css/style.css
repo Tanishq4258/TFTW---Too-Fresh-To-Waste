@@ -231,16 +231,16 @@ input, textarea, select {
   right: 0;
   z-index: 1000;
   height: var(--navbar-height);
-  background: rgba(255, 120, 141, 0.72);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  background: rgba(255, 100, 125, 0.92);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 24px rgba(255, 95, 120, 0.18);
+  box-shadow: 0 4px 28px rgba(244, 95, 120, 0.30);
   transition: background var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
 }
 
 .navbar.scrolled {
-  background: rgba(244, 95, 120, 0.88);
+  background: rgba(240, 80, 105, 0.97);
   border-color: rgba(255, 255, 255, 0.22);
   box-shadow: 0 8px 32px rgba(244, 95, 120, 0.28);
 }
