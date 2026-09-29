@@ -1,0 +1,7 @@
+# Pyrefly configuration for TFTW backend
+# Tells Pyrefly to use the correct Python (where Django is installed)
+
+python_interpreter = "C:\\Users\\tanis\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+
+[project]
+name = "tftw-backend"

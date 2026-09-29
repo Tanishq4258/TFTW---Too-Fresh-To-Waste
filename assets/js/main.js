@@ -300,20 +300,35 @@ function initLoginForm() {
 
     if (!valid) return;
 
-    // Simulate loading
     submitBtn.classList.add('btn-loading');
     submitBtn.disabled = true;
 
-    await new Promise(resolve => setTimeout(resolve, 1800));
+    try {
+      const res = await window.Auth.login(email, password);
 
-    submitBtn.classList.remove('btn-loading');
-    submitBtn.disabled = false;
+      if (res.ok) {
+        // Show success banner then redirect
+        const successEl = document.getElementById('loginSuccess');
+        if (successEl) successEl.classList.add('show');
+        setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+      } else {
+        // Map backend field errors to the UI
+        const errors = res.data?.errors || {};
+        const nonField = errors.non_field_errors || errors.detail;
+        if (nonField) {
+          // Show a generic credential error on the password field
+          showError('loginPassword', Array.isArray(nonField) ? nonField[0] : nonField);
+        }
+        if (errors.email) showError('loginEmail', Array.isArray(errors.email) ? errors.email[0] : errors.email);
+        if (errors.password) showError('loginPassword', Array.isArray(errors.password) ? errors.password[0] : errors.password);
 
-    // Show mock success (redirect would happen here)
-    const successEl = document.getElementById('loginSuccess');
-    if (successEl) {
-      successEl.classList.add('show');
-      setTimeout(() => successEl.classList.remove('show'), 4000);
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+      }
+    } catch (err) {
+      showError('loginPassword', 'Network error. Please check your connection.');
+      submitBtn.classList.remove('btn-loading');
+      submitBtn.disabled = false;
     }
   });
 }
@@ -415,19 +430,47 @@ function initSignupForm() {
     submitBtn.classList.add('btn-loading');
     submitBtn.disabled = true;
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Determine selected account type
+    const activeTypeBtn = document.querySelector('.account-type-btn.active');
+    const accountType = activeTypeBtn?.id === 'typeBusinessBtn' ? 'business' : 'customer';
 
-    submitBtn.classList.remove('btn-loading');
-    submitBtn.disabled = false;
-
-    const successEl = document.getElementById('signupSuccess');
-    if (successEl) {
-      successEl.classList.add('show');
-      form.reset();
-      document.querySelectorAll('.account-type-btn').forEach((b, i) => {
-        b.classList.toggle('active', i === 0);
+    try {
+      const res = await window.Auth.register({
+        first_name: fields.firstName.value.trim(),
+        last_name: fields.lastName.value.trim(),
+        email,
+        password: pwd,
+        confirm_password: confirm,
+        account_type: accountType,
       });
-      updateStrengthBar('', 'strengthBar', 'strengthLabel');
+
+      if (res.ok) {
+        const successEl = document.getElementById('signupSuccess');
+        if (successEl) successEl.classList.add('show');
+        form.reset();
+        document.querySelectorAll('.account-type-btn').forEach((b, i) => {
+          b.classList.toggle('active', i === 0);
+        });
+        updateStrengthBar('', 'strengthBar', 'strengthLabel');
+        // Redirect to home after brief success display
+        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+      } else {
+        // Map backend validation errors to form fields
+        const errors = res.data?.errors || {};
+        if (errors.first_name) showError('signupFirstName', Array.isArray(errors.first_name) ? errors.first_name[0] : errors.first_name);
+        if (errors.last_name)  showError('signupLastName',  Array.isArray(errors.last_name)  ? errors.last_name[0]  : errors.last_name);
+        if (errors.email)      showError('signupEmail',     Array.isArray(errors.email)      ? errors.email[0]      : errors.email);
+        if (errors.password)   showError('signupPassword',  Array.isArray(errors.password)   ? errors.password[0]   : errors.password);
+        if (errors.confirm_password) showError('signupConfirmPassword', Array.isArray(errors.confirm_password) ? errors.confirm_password[0] : errors.confirm_password);
+        if (errors.non_field_errors) showError('signupEmail', Array.isArray(errors.non_field_errors) ? errors.non_field_errors[0] : errors.non_field_errors);
+
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+      }
+    } catch (err) {
+      showError('signupEmail', 'Network error. Please check your connection.');
+      submitBtn.classList.remove('btn-loading');
+      submitBtn.disabled = false;
     }
   });
 }
@@ -437,4 +480,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initPasswordToggles();
   initLoginForm();
   initSignupForm();
+
+  // ─── Auth persistence: redirect logged-in users away from auth pages ────────
+  const isAuthPage = !!document.getElementById('loginPage') || !!document.getElementById('signupPage');
+  if (isAuthPage && window.Auth && window.Auth.isLoggedIn()) {
+    window.location.href = 'index.html';
+  }
 });

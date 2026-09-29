@@ -1,0 +1,12 @@
+{
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Windows",
+  "pythonPath": "C:\\Users\\tanis\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+  "venvPath": "C:\\Users\\tanis\\AppData\\Local\\Programs\\Python\\Python313",
+  "extraPaths": [
+    "C:\\Users\\tanis\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingModuleSource": false
+}
