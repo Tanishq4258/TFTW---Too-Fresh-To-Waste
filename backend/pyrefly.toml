@@ -1,7 +1,15 @@
 # Pyrefly configuration for TFTW backend
-# Tells Pyrefly to use the correct Python (where Django is installed)
+# Tells Pyrefly to use the correct Python (venv where Django is installed)
 
-python_interpreter = "C:\\Users\\tanis\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+python_interpreter = "../.venv/Scripts/python.exe"
+
+# Django / DRF don't ship type stubs — suppress the noise
+# Django models intentionally override abstract base class attributes
+# (e.g. AbstractBaseUser.is_active: bool → BooleanField) which Pyrefly
+# incorrectly flags as inconsistent overrides.
+[errors]
+ignore_errors = ["untyped-import", "bad-override-mutable-attribute"]
 
 [project]
 name = "tftw-backend"
+
