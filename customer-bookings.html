@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Bookings — Too Fresh To Waste</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <style>
+    .bookings-container {
+      max-width: 900px;
+      margin: 40px auto 80px;
+      padding: 0 20px;
+    }
+    .booking-card {
+      background: #FFFFFF;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 20px;
+      align-items: center;
+      transition: transform var(--transition-fast);
+    }
+    .booking-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    .booking-card-img {
+      width: 120px;
+      height: 100px;
+      border-radius: var(--radius-md);
+      object-fit: cover;
+    }
+    .booking-card-info h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 4px;
+    }
+    .booking-card-meta {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .pickup-code-box {
+      background: var(--color-primary-light);
+      border: 1px dashed var(--color-primary);
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      font-weight: 800;
+      color: var(--color-primary);
+      font-size: 0.95rem;
+      display: inline-block;
+      margin-top: 6px;
+    }
+    .booking-card-side {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .booking-amount {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--color-text);
+    }
+    @media (max-width: 650px) {
+      .booking-card {
+        grid-template-columns: 1fr;
+        text-align: left;
+      }
+      .booking-card-side {
+        align-items: flex-start;
+        text-align: left;
+      }
+      .booking-card-img {
+        width: 100%;
+        height: 160px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header id="navbar" class="navbar" role="banner">
+    <div class="container navbar-inner">
+      <a href="index.html" class="logo" aria-label="Too Fresh To Waste Home">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8 2 5 5 5 9c0 2.5 1.2 4.7 3 6.1V20a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-4.9c1.8-1.4 3-3.6 3-6.1 0-4-3-7-7-7zm-1 16v-3h2v3h-2zm3-5.3V17h-4v-4.3A5 5 0 0 1 7 9c0-2.8 2.2-5 5-5s5 2.2 5 5a5 5 0 0 1-3 4.7z"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="brand-name">Too Fresh To Waste</span>
+          <span class="brand-tagline">Save Food · Save Money</span>
+        </div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="index.html#discover" class="nav-link">Marketplace</a>
+        <a href="customer-bookings.html" class="nav-link active" style="color:var(--color-primary); font-weight:700;">My Bookings</a>
+      </nav>
+
+      <div class="nav-actions">
+        <span id="userGreeting" style="font-size:0.9rem; font-weight:600;"></span>
+        <button class="btn btn-outline btn-sm" id="logoutBtn">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="bookings-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h1 style="font-size:2rem; font-weight:800; color:var(--color-text);">My Food Reservations</h1>
+        <p style="color:var(--color-text-secondary); font-size:0.95rem;">Track your saved surplus meals &amp; pickup times</p>
+      </div>
+      <span class="live-pulse">Live Connected</span>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="category-filter-bar" style="justify-content:flex-start; margin-bottom:24px;">
+      <button class="cat-pill active" data-status="">All Orders</button>
+      <button class="cat-pill" data-status="CONFIRMED">Confirmed</button>
+      <button class="cat-pill" data-status="READY_FOR_PICKUP">Ready for Pickup</button>
+      <button class="cat-pill" data-status="COMPLETED">Completed</button>
+      <button class="cat-pill" data-status="CANCELLED">Cancelled</button>
+    </div>
+
+    <!-- Bookings List -->
+    <div id="bookingsList">
+      <div class="empty-state">
+        <div class="empty-state-icon">⏳</div>
+        <div class="empty-state-title">Loading your reservations...</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/realtime.js"></script>
+  <script>
+    // Ensure customer is logged in
+    if (!Auth.isLoggedIn()) {
+      window.location.href = 'login.html';
+    }
+
+    const user = Auth.getUser();
+    if (user) {
+      document.getElementById('userGreeting').textContent = `Hi, ${user.first_name || 'Customer'}`;
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await Auth.logout();
+      window.location.href = 'index.html';
+    });
+
+    let currentFilter = '';
+    let allBookings = [];
+
+    async function loadBookings() {
+      const res = await API.getBookings(currentFilter);
+      const container = document.getElementById('bookingsList');
+
+      if (!res.ok || !res.data) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-title">Unable to load reservations</div>
+            <p>Please check your connection and try again.</p>
+          </div>
+        `;
+        return;
+      }
+
+      allBookings = res.data;
+      renderBookings();
+    }
+
+    function renderBookings() {
+      const container = document.getElementById('bookingsList');
+      if (allBookings.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🍽️</div>
+            <div class="empty-state-title">No reservations found</div>
+            <p>Explore surplus food deals near you and rescue your first meal!</p>
+            <a href="index.html#discover" class="btn btn-primary" style="margin-top:16px;">Browse Marketplace</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = allBookings.map(b => {
+        const statusClass = b.status === 'CONFIRMED' ? 'badge-confirmed' :
+                            b.status === 'READY_FOR_PICKUP' ? 'badge-ready' :
+                            b.status === 'COMPLETED' ? 'badge-completed' :
+                            b.status === 'CANCELLED' ? 'badge-cancelled' : 'badge-pending';
+
+        const canCancel = b.status === 'PENDING' || b.status === 'CONFIRMED';
+
+        return `
+          <article class="booking-card" id="bookingCard-${b.id}">
+            <img class="booking-card-img" src="${b.listing_image || 'assets/images/bakery_box.jpg'}" alt="${b.listing_name}" onerror="this.src='assets/images/bakery_box.jpg'"/>
+            <div class="booking-card-info">
+              <div style="font-size:0.75rem; color:#888; font-weight:700; margin-bottom:2px;">ORDER #${b.booking_number}</div>
+              <h3>${b.listing_name}</h3>
+              <div class="booking-card-meta">
+                <span>📍 <strong>${b.restaurant_name}</strong> · ${b.restaurant_address}</span>
+                <span>⏰ Pickup Window: <strong>${b.pickup_start} – ${b.pickup_end}</strong></span>
+                <span>📦 Quantity: <strong>${b.quantity} box(es)</strong></span>
+              </div>
+              <div class="pickup-code-box">Pickup Verification PIN: ${b.pickup_code || '----'}</div>
+            </div>
+            <div class="booking-card-side">
+              <span class="badge ${statusClass}">${b.status.replace(/_/g, ' ')}</span>
+              <div class="booking-amount">₹${parseFloat(b.total_amount).toFixed(2)}</div>
+              ${canCancel ? `<button class="btn btn-outline btn-sm" onclick="cancelBooking(${b.id})" style="color:#E74C3C; border-color:#F5B7B1;">Cancel Order</button>` : ''}
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    async function cancelBooking(id) {
+      if (!confirm('Are you sure you want to cancel this reservation? The inventory will be released back to the store.')) return;
+      const res = await API.updateBookingStatus(id, 'CANCELLED', 'Cancelled by customer');
+      if (res.ok) {
+        Realtime.notify('Reservation Cancelled', 'Your order was cancelled and refunded.', 'warning');
+        loadBookings();
+      } else {
+        alert(res.data?.error || 'Failed to cancel booking.');
+      }
+    }
+
+    // Filter pills
+    document.querySelectorAll('.cat-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.status;
+        loadBookings();
+      });
+    });
+
+    // Real-time synchronization
+    Realtime.on('booking_status_changed', (data) => {
+      // If affected booking is currently in our list, update it
+      const match = allBookings.find(b => b.id === data.booking.id);
+      if (match) {
+        match.status = data.booking.status;
+        Realtime.notify('Order Updated!', `Order #${data.booking.booking_number} is now ${data.booking.status.replace(/_/g, ' ')}!`, 'success');
+        renderBookings();
+      }
+    });
+
+    loadBookings();
+  </script>
+</body>
+</html>

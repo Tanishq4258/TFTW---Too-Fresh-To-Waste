@@ -193,135 +193,36 @@
           </button>
         </div>
 
-        <!-- Food Cards Grid -->
-        <div class="food-grid">
+        <!-- Live Indicator & Sort Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; flex-wrap:wrap; gap:12px;">
+          <span class="live-pulse">Live Surplus Inventory</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label for="priceSortSelect" style="font-size:0.85rem; font-weight:600; color:var(--color-text-secondary);">Sort:</label>
+            <select id="priceSortSelect" class="form-input" style="padding:6px 12px; font-size:0.85rem; border-radius:var(--radius-full); width:auto;">
+              <option value="newest">Newest First</option>
+              <option value="discount">Biggest Discount</option>
+              <option value="price_low">Price: Low to High</option>
+              <option value="price_high">Price: High to Low</option>
+            </select>
+          </div>
+        </div>
 
-          <!-- Card 1 -->
-          <article class="food-card reveal" aria-label="Bakery Surprise Box listing">
-            <div class="food-card-image">
-              <img
-                src="assets/images/bakery_box.jpg"
-                alt="Assorted freshly baked pastries in a kraft box"
-                loading="lazy"
-              />
-              <span class="food-card-discount" aria-label="63% discount">63% OFF</span>
-              <div class="food-card-availability">
-                <span class="dot" aria-hidden="true"></span>
-                2 left
-              </div>
-            </div>
-            <div class="food-card-body">
-              <p class="food-card-business">The Morning Oven · 0.8 km</p>
-              <h3 class="food-card-title">Bakery Surprise Box</h3>
-              <p class="food-card-desc">Freshly baked goodies — pastries, croissants & more.</p>
-              <div class="food-card-meta">
-                <div class="food-card-meta-row">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                  </svg>
-                  Pickup 7:30 PM – 9:00 PM
-                </div>
-                <div class="food-card-meta-row">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                  </svg>
-                  Sector 17, Chandigarh
-                </div>
-              </div>
-              <div class="food-card-footer">
-                <div class="food-card-pricing">
-                  <span class="food-card-price">₹149</span>
-                  <span class="food-card-original">₹399</span>
-                </div>
-                <button class="food-card-btn" id="viewCard1Btn">View Details</button>
-              </div>
-            </div>
-          </article>
+        <!-- Category Pills -->
+        <div class="category-filter-bar" id="categoryFilterBar">
+          <button class="cat-pill active" data-category="all">✨ All Surplus</button>
+          <button class="cat-pill" data-category="bakery">🥐 Bakery</button>
+          <button class="cat-pill" data-category="meals">🍲 Meals</button>
+          <button class="cat-pill" data-category="desserts">🍰 Desserts</button>
+          <button class="cat-pill" data-category="beverages">🥤 Beverages</button>
+          <button class="cat-pill" data-category="snacks">🥪 Snacks</button>
+        </div>
 
-          <!-- Card 2 -->
-          <article class="food-card reveal" aria-label="Evening Café Box listing">
-            <div class="food-card-image">
-              <img
-                src="assets/images/cafe_box.jpg"
-                alt="Sandwiches, croissants and pastries on a wooden board"
-                loading="lazy"
-              />
-              <span class="food-card-discount" aria-label="56% discount">56% OFF</span>
-              <div class="food-card-availability">
-                <span class="dot" aria-hidden="true"></span>
-                4 left
-              </div>
-            </div>
-            <div class="food-card-body">
-              <p class="food-card-business">Brew & Bite · 1.2 km</p>
-              <h3 class="food-card-title">Evening Café Box</h3>
-              <p class="food-card-desc">Sandwiches, pastries & more from today's service.</p>
-              <div class="food-card-meta">
-                <div class="food-card-meta-row">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                  </svg>
-                  Pickup 6:00 PM – 8:00 PM
-                </div>
-                <div class="food-card-meta-row">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                  </svg>
-                  Sector 35, Chandigarh
-                </div>
-              </div>
-              <div class="food-card-footer">
-                <div class="food-card-pricing">
-                  <span class="food-card-price">₹199</span>
-                  <span class="food-card-original">₹450</span>
-                </div>
-                <button class="food-card-btn" id="viewCard2Btn">View Details</button>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 3 -->
-          <article class="food-card reveal" aria-label="Fresh Dessert Box listing">
-            <div class="food-card-image">
-              <img
-                src="assets/images/dessert_box.jpg"
-                alt="Assorted fresh desserts including macarons, brownies and fruit tarts"
-                loading="lazy"
-              />
-              <span class="food-card-discount" aria-label="57% discount">57% OFF</span>
-              <div class="food-card-availability" style="color:#F39C12;">
-                <span class="dot" style="background:#F39C12;" aria-hidden="true"></span>
-                Last 1!
-              </div>
-            </div>
-            <div class="food-card-body">
-              <p class="food-card-business">Sweet Spot Patisserie · 2.1 km</p>
-              <h3 class="food-card-title">Fresh Dessert Box</h3>
-              <p class="food-card-desc">Today's leftover desserts — macarons, tarts & treats.</p>
-              <div class="food-card-meta">
-                <div class="food-card-meta-row">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                  </svg>
-                  Pickup 8:00 PM – 9:30 PM
-                </div>
-                <div class="food-card-meta-row">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                  </svg>
-                  Sector 22, Chandigarh
-                </div>
-              </div>
-              <div class="food-card-footer">
-                <div class="food-card-pricing">
-                  <span class="food-card-price">₹129</span>
-                  <span class="food-card-original">₹300</span>
-                </div>
-                <button class="food-card-btn" id="viewCard3Btn">View Details</button>
-              </div>
-            </div>
-          </article>
-
+        <!-- Food Cards Grid (Populated dynamically from backend API) -->
+        <div class="food-grid" id="marketplaceFoodGrid">
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state-icon">⏳</div>
+            <div class="empty-state-title">Loading live surplus food...</div>
+          </div>
         </div>
       </div>
     </section>
@@ -697,7 +598,94 @@
     </div>
   </footer>
 
+  <!-- ==================== FOOD DETAILS & RESERVATION MODAL ==================== -->
+  <div class="modal-backdrop" id="foodReservationModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="resModalTitle">Food Reservation</h3>
+        <button class="modal-close" onclick="closeFoodModal()">&times;</button>
+      </div>
+
+      <div class="modal-body" id="resModalBody">
+        <img id="resModalImage" src="assets/images/bakery_box.jpg" alt="" style="width:100%; height:200px; object-fit:cover; border-radius:var(--radius-md); margin-bottom:16px;" />
+
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div>
+            <h4 id="resModalFoodName" style="font-size:1.25rem; font-weight:800; color:var(--color-text); margin-bottom:4px;">Bakery Surprise Box</h4>
+            <div style="font-size:0.875rem; color:var(--color-text-secondary);">
+              📍 <strong id="resModalRestaurant">The Morning Oven</strong> · <span id="resModalAddress">Sector 17, Chandigarh</span>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:1.4rem; font-weight:800; color:var(--color-primary);" id="resModalPrice">₹149</div>
+            <div style="font-size:0.85rem; color:#999; text-decoration:line-through;" id="resModalOrigPrice">₹399</div>
+          </div>
+        </div>
+
+        <p id="resModalDesc" style="font-size:0.9rem; color:var(--color-text-secondary); margin-bottom:16px; line-height:1.5;">
+          Freshly baked artisan pastries, croissants and rolls prepared today.
+        </p>
+
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:var(--radius-md); padding:12px 16px; margin-bottom:18px; font-size:0.85rem;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span>⏰ Pickup Window:</span>
+            <strong id="resModalPickup">7:30 PM – 9:00 PM</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>📦 Remaining Stock:</span>
+            <strong id="resModalRemaining" style="color:var(--color-green);">4 available</strong>
+          </div>
+        </div>
+
+        <!-- Quantity selector -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+          <span style="font-weight:700; font-size:0.95rem;">Select Quantity:</span>
+          <div class="qty-stepper">
+            <button class="qty-btn" type="button" id="qtyMinusBtn">−</button>
+            <span class="qty-val" id="resModalQtyVal">1</span>
+            <button class="qty-btn" type="button" id="qtyPlusBtn">+</button>
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div style="margin-bottom:18px;">
+          <label style="font-size:0.85rem; font-weight:700; color:var(--color-text); display:block; margin-bottom:6px;">Payment Method:</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+            <label class="cat-pill active" style="text-align:center; padding:8px 4px; font-size:0.8rem; cursor:pointer;" id="payUpiLabel">
+              <input type="radio" name="payMethod" value="UPI" checked style="display:none;" />
+              ⚡ UPI / QR
+            </label>
+            <label class="cat-pill" style="text-align:center; padding:8px 4px; font-size:0.8rem; cursor:pointer;" id="payCardLabel">
+              <input type="radio" name="payMethod" value="CARD" style="display:none;" />
+              💳 Card
+            </label>
+            <label class="cat-pill" style="text-align:center; padding:8px 4px; font-size:0.8rem; cursor:pointer;" id="payCashLabel">
+              <input type="radio" name="payMethod" value="CASH_ON_PICKUP" style="display:none;" />
+              💵 Cash at Pickup
+            </label>
+          </div>
+        </div>
+
+        <!-- Total Calculation -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:14px; border-top:1px solid #E2E8F0;">
+          <span style="font-size:1.1rem; font-weight:800; color:var(--color-text);">Total Amount:</span>
+          <span style="font-size:1.4rem; font-weight:800; color:var(--color-primary);" id="resModalTotal">₹149.00</span>
+        </div>
+
+        <div id="bookingErrorNotice" style="display:none; color:#E74C3C; font-size:0.85rem; margin-top:12px; font-weight:600; text-align:center;"></div>
+      </div>
+
+      <div class="modal-footer" id="resModalFooter">
+        <button type="button" class="btn btn-outline" onclick="closeFoodModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmReservationBtn">Book &amp; Reserve Now ✓</button>
+      </div>
+    </div>
+  </div>
+
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/realtime.js"></script>
   <script src="assets/js/main.js"></script>
 </body>
 </html>
+

@@ -310,7 +310,15 @@ function initLoginForm() {
         // Show success banner then redirect
         const successEl = document.getElementById('loginSuccess');
         if (successEl) successEl.classList.add('show');
-        setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+
+        const u = res.data?.user || window.Auth.getUser();
+        let target = 'index.html';
+        if (u?.account_type === 'admin' || u?.is_staff || u?.is_superuser) {
+          target = 'admin-dashboard.html';
+        } else if (u?.account_type === 'restaurant' || u?.account_type === 'business') {
+          target = 'restaurant-dashboard.html';
+        }
+        setTimeout(() => { window.location.href = target; }, 1000);
       } else {
         // Map backend field errors to the UI
         const errors = res.data?.errors || {};
@@ -452,8 +460,13 @@ function initSignupForm() {
           b.classList.toggle('active', i === 0);
         });
         updateStrengthBar('', 'strengthBar', 'strengthLabel');
-        // Redirect to home after brief success display
-        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+        // Redirect based on role
+        const u = res.data?.user || window.Auth.getUser();
+        let target = 'index.html';
+        if (u?.account_type === 'restaurant' || u?.account_type === 'business') {
+          target = 'restaurant-dashboard.html';
+        }
+        setTimeout(() => { window.location.href = target; }, 1200);
       } else {
         // Map backend validation errors to form fields
         const errors = res.data?.errors || {};
@@ -482,10 +495,20 @@ function updateAuthUI() {
   const user = window.Auth.getUser();
   const firstName = user?.first_name || 'User';
 
-  // ── Desktop navbar: replace Login/Signup with greeting + Logout ──
+  let portalBtn = '';
+  if (user?.account_type === 'admin' || user?.is_staff || user?.is_superuser) {
+    portalBtn = `<a href="admin-dashboard.html" class="btn btn-outline btn-sm" style="color:white; border-color:rgba(255,255,255,0.7); margin-right:8px;">Admin Console</a>`;
+  } else if (user?.account_type === 'restaurant' || user?.account_type === 'business') {
+    portalBtn = `<a href="restaurant-dashboard.html" class="btn btn-outline btn-sm" style="color:white; border-color:rgba(255,255,255,0.7); margin-right:8px;">Kitchen Dashboard</a>`;
+  } else {
+    portalBtn = `<a href="customer-bookings.html" class="btn btn-outline btn-sm" style="color:white; border-color:rgba(255,255,255,0.7); margin-right:8px;">My Bookings</a>`;
+  }
+
+  // ── Desktop navbar ──
   const navActions = document.querySelector('.nav-actions');
   if (navActions) {
     navActions.innerHTML = `
+      ${portalBtn}
       <span class="nav-greeting" style="color:white; font-size:0.9rem; opacity:0.9; margin-right:8px;">
         Hi, <strong>${firstName}</strong>
       </span>
@@ -496,36 +519,27 @@ function updateAuthUI() {
     document.getElementById('navLogoutBtn').addEventListener('click', handleLogout);
   }
 
-  // ── Mobile navbar: replace Login/Signup with greeting + Logout ──
+  // ── Mobile navbar ──
   const mobileNavActions = document.querySelector('.mobile-nav-actions');
   if (mobileNavActions) {
     mobileNavActions.innerHTML = `
-      <span style="color:var(--color-text-muted); font-size:0.95rem;">
+      <div style="margin-bottom:8px;">${portalBtn}</div>
+      <span style="color:var(--color-text-muted); font-size:0.95rem; margin-bottom:8px; display:block;">
         Signed in as <strong>${firstName}</strong>
       </span>
-      <button class="btn btn-primary" id="mobileLogoutBtn" style="cursor:pointer; border:none;">
+      <button class="btn btn-primary" id="mobileLogoutBtn" style="cursor:pointer; border:none; width:100%;">
         Log Out
       </button>
     `;
     document.getElementById('mobileLogoutBtn').addEventListener('click', handleLogout);
   }
 
-  // ── Update ALL remaining links to login.html / signup.html across the page ──
-  // These links would just bounce the user back, so redirect them or relabel them.
+  // ── Update CTA links ──
   document.querySelectorAll('a[href="signup.html"], a[href="login.html"]').forEach(link => {
-    // Skip navbar links (already handled above)
     if (link.closest('.nav-actions') || link.closest('.mobile-nav-actions')) return;
-
-    // For CTA buttons: change to scroll to #discover (the food listings section)
     if (link.id === 'ctaSignupBtn' || link.id === 'partnerBtn') {
       link.href = '#discover';
-      if (link.id === 'ctaSignupBtn') link.textContent = '🍽️ Browse Food';
-    }
-
-    // For footer links: just point to # so they don't bounce
-    if (link.closest('footer')) {
-      link.href = '#';
-      link.addEventListener('click', (e) => e.preventDefault());
+      if (link.id === 'ctaSignupBtn') link.textContent = '🍽️ Browse Surplus Deals';
     }
   });
 }
@@ -536,16 +550,372 @@ async function handleLogout() {
   window.location.href = 'index.html';
 }
 
+// =============================================
+// LIVE MARKETPLACE & RESERVATION SYSTEM
+// =============================================
+
+let activeCategory = 'all';
+let currentListings = [];
+let currentModalListing = null;
+let currentModalQty = 1;
+let currentPayMethod = 'UPI';
+
+async function initMarketplace() {
+  const grid = document.getElementById('marketplaceFoodGrid');
+  if (!grid) return;
+
+  // Category filter pills
+  document.querySelectorAll('#categoryFilterBar .cat-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#categoryFilterBar .cat-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCategory = btn.dataset.category || 'all';
+      loadMarketplaceListings();
+    });
+  });
+
+  // Search input
+  const searchInput = document.getElementById('locationSearch');
+  if (searchInput) {
+    let searchTimeout = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(loadMarketplaceListings, 300);
+    });
+  }
+
+  // Price sort
+  const sortSelect = document.getElementById('priceSortSelect');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', loadMarketplaceListings);
+  }
+
+  // Initial load
+  await loadMarketplaceListings();
+  initModalListeners();
+  initRealtimeMarketplace();
+}
+
+async function loadMarketplaceListings() {
+  const grid = document.getElementById('marketplaceFoodGrid');
+  if (!grid || !window.API) return;
+
+  const search = document.getElementById('locationSearch')?.value || '';
+  const sort = document.getElementById('priceSortSelect')?.value || 'newest';
+
+  const res = await window.API.getListings({
+    category: activeCategory,
+    search,
+    sort,
+  });
+
+  if (!res.ok || !res.data) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">⚠️</div>
+        <div class="empty-state-title">Unable to reach the food network</div>
+        <p>Please ensure backend server is active and try again.</p>
+      </div>
+    `;
+    return;
+  }
+
+  currentListings = res.data;
+  renderMarketplaceCards();
+}
+
+function renderMarketplaceCards() {
+  const grid = document.getElementById('marketplaceFoodGrid');
+  if (!grid) return;
+
+  if (currentListings.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">🍽️</div>
+        <div class="empty-state-title">No surplus food available right now</div>
+        <p>Check back shortly as local cafes and bakeries post their evening surplus!</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = currentListings.map(item => {
+    const isSoldOut = item.quantity_available <= 0 || item.status === 'sold_out';
+    const availClass = isSoldOut ? 'sold-out' : (item.quantity_available <= 2 ? 'warning' : '');
+    const availText = isSoldOut ? 'Sold Out' : (item.quantity_available === 1 ? 'Last 1 left!' : `${item.quantity_available} left`);
+    const discountText = item.discount_percent > 0 ? `${item.discount_percent}% OFF` : 'DEAL';
+
+    return `
+      <article class="food-card" id="foodCard-${item.id}" aria-label="${item.name} listing">
+        <div class="food-card-image">
+          <img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.src='assets/images/bakery_box.jpg'"/>
+          <span class="food-card-discount">${discountText}</span>
+          <div class="food-card-availability ${availClass}" id="cardAvail-${item.id}">
+            <span class="dot" aria-hidden="true"></span>
+            ${availText}
+          </div>
+        </div>
+        <div class="food-card-body">
+          <p class="food-card-business">${item.restaurant_name} · ${item.restaurant_city}</p>
+          <h3 class="food-card-title">${item.name}</h3>
+          <p class="food-card-desc">${item.description}</p>
+          <div class="food-card-meta">
+            <div class="food-card-meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+              </svg>
+              Pickup ${item.pickup_start} – ${item.pickup_end}
+            </div>
+            <div class="food-card-meta-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              ${item.restaurant_address}
+            </div>
+          </div>
+          <div class="food-card-footer">
+            <div class="food-card-pricing">
+              <span class="food-card-price">₹${parseFloat(item.discounted_price).toFixed(0)}</span>
+              <span class="food-card-original">₹${parseFloat(item.original_price).toFixed(0)}</span>
+            </div>
+            <button class="food-card-btn" onclick="openFoodModalById(${item.id})" ${isSoldOut ? 'disabled style="opacity:0.6; cursor:not-allowed;"' : ''}>
+              ${isSoldOut ? 'Sold Out' : 'View Details'}
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+// Modal controls
+window.openFoodModalById = function (id) {
+  const listing = currentListings.find(l => l.id === id);
+  if (!listing) return;
+
+  currentModalListing = listing;
+  currentModalQty = 1;
+  currentPayMethod = 'UPI';
+
+  document.getElementById('resModalTitle').textContent = listing.name;
+  document.getElementById('resModalFoodName').textContent = listing.name;
+  document.getElementById('resModalRestaurant').textContent = listing.restaurant_name;
+  document.getElementById('resModalAddress').textContent = listing.restaurant_address + ', ' + listing.restaurant_city;
+  document.getElementById('resModalDesc').textContent = listing.description;
+  document.getElementById('resModalImage').src = listing.image || 'assets/images/bakery_box.jpg';
+  document.getElementById('resModalPrice').textContent = `₹${parseFloat(listing.discounted_price).toFixed(2)}`;
+  document.getElementById('resModalOrigPrice').textContent = `₹${parseFloat(listing.original_price).toFixed(2)}`;
+  document.getElementById('resModalPickup').textContent = `${listing.pickup_start} – ${listing.pickup_end}`;
+  document.getElementById('resModalRemaining').textContent = `${listing.quantity_available} available`;
+  document.getElementById('resModalQtyVal').textContent = '1';
+
+  // Reset payment selection to UPI
+  document.querySelectorAll('input[name="payMethod"]').forEach(r => {
+    r.checked = r.value === 'UPI';
+    r.parentElement.classList.toggle('active', r.value === 'UPI');
+  });
+
+  const errEl = document.getElementById('bookingErrorNotice');
+  if (errEl) errEl.style.display = 'none';
+
+  updateModalTotal();
+
+  // Reset footer buttons
+  const footer = document.getElementById('resModalFooter');
+  footer.innerHTML = `
+    <button type="button" class="btn btn-outline" onclick="closeFoodModal()">Cancel</button>
+    <button type="button" class="btn btn-primary" id="confirmReservationBtn">Book &amp; Reserve Now ✓</button>
+  `;
+  document.getElementById('confirmReservationBtn').addEventListener('click', handleConfirmReservation);
+
+  document.getElementById('foodReservationModal').classList.add('open');
+};
+
+window.closeFoodModal = function () {
+  const m = document.getElementById('foodReservationModal');
+  if (m) m.classList.remove('open');
+};
+
+function updateModalTotal() {
+  if (!currentModalListing) return;
+  const unit = parseFloat(currentModalListing.discounted_price);
+  const total = unit * currentModalQty;
+  document.getElementById('resModalTotal').textContent = `₹${total.toFixed(2)}`;
+}
+
+function initModalListeners() {
+  const minusBtn = document.getElementById('qtyMinusBtn');
+  const plusBtn = document.getElementById('qtyPlusBtn');
+
+  if (minusBtn && plusBtn) {
+    minusBtn.addEventListener('click', () => {
+      if (currentModalQty > 1) {
+        currentModalQty--;
+        document.getElementById('resModalQtyVal').textContent = currentModalQty;
+        updateModalTotal();
+      }
+    });
+
+    plusBtn.addEventListener('click', () => {
+      if (currentModalListing && currentModalQty < currentModalListing.quantity_available) {
+        currentModalQty++;
+        document.getElementById('resModalQtyVal').textContent = currentModalQty;
+        updateModalTotal();
+      }
+    });
+  }
+
+  // Payment radio buttons
+  document.querySelectorAll('input[name="payMethod"]').forEach(radio => {
+    radio.parentElement.addEventListener('click', () => {
+      document.querySelectorAll('input[name="payMethod"]').forEach(r => {
+        r.parentElement.classList.remove('active');
+      });
+      radio.checked = true;
+      radio.parentElement.classList.add('active');
+      currentPayMethod = radio.value;
+    });
+  });
+}
+
+async function handleConfirmReservation() {
+  if (!window.Auth || !window.Auth.isLoggedIn()) {
+    alert('Please log in or create an account to book surplus food!');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const btn = document.getElementById('confirmReservationBtn');
+  const errEl = document.getElementById('bookingErrorNotice');
+  btn.disabled = true;
+  btn.textContent = 'Reserving in database...';
+  if (errEl) errEl.style.display = 'none';
+
+  const payload = {
+    listing_id: currentModalListing.id,
+    quantity: currentModalQty,
+    payment_method: currentPayMethod,
+    notes: 'Pick up via customer app',
+  };
+
+  const res = await window.API.createBooking(payload);
+  btn.disabled = false;
+  btn.textContent = 'Book & Reserve Now ✓';
+
+  if (res.ok && res.data) {
+    const booking = res.data;
+    // Show confirmation inside modal
+    const body = document.getElementById('resModalBody');
+    body.innerHTML = `
+      <div style="text-align:center; padding:10px 0 20px;">
+        <div style="width:64px; height:64px; background:#D1FAE5; color:#10B981; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:32px; margin-bottom:14px;">
+          ✓
+        </div>
+        <h4 style="font-size:1.4rem; font-weight:800; color:#1E293B; margin-bottom:4px;">Reservation Confirmed!</h4>
+        <p style="color:#64748B; font-size:0.9rem; margin-bottom:20px;">Your food box has been successfully locked and reserved.</p>
+
+        <div style="background:#F8FAFC; border:2px dashed #CBD5E1; border-radius:var(--radius-lg); padding:18px; text-align:left; margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <span style="color:#64748B; font-size:0.85rem;">Booking Reference:</span>
+            <strong style="color:var(--color-primary); font-size:1.05rem;">#${booking.booking_number}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <span style="color:#64748B; font-size:0.85rem;">Food Item:</span>
+            <strong>${booking.quantity}x ${booking.listing_name}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <span style="color:#64748B; font-size:0.85rem;">Amount:</span>
+            <strong>₹${parseFloat(booking.total_amount).toFixed(2)}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <span style="color:#64748B; font-size:0.85rem;">Pickup Time:</span>
+            <strong style="color:#2563EB;">${booking.pickup_start} – ${booking.pickup_end}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding-top:10px; border-top:1px solid #E2E8F0; align-items:center;">
+            <span style="color:#64748B; font-size:0.85rem;">Verification PIN:</span>
+            <code style="background:var(--color-primary-light); color:var(--color-primary); padding:4px 10px; border-radius:6px; font-weight:800; font-size:1.1rem;">${booking.pickup_code || '----'}</code>
+          </div>
+        </div>
+
+        <p style="font-size:0.8rem; color:#888;">Show your Verification PIN at the counter during the pickup window to collect your food.</p>
+      </div>
+    `;
+
+    document.getElementById('resModalFooter').innerHTML = `
+      <a href="customer-bookings.html" class="btn btn-primary" style="width:100%; text-align:center;">View in My Bookings →</a>
+    `;
+
+    if (window.Realtime) {
+      window.Realtime.notify('Reservation Placed!', `Reserved ${booking.quantity}x ${booking.listing_name} (Order #${booking.booking_number})`, 'success');
+    }
+
+    // Refresh marketplace listings to reflect decreased stock
+    loadMarketplaceListings();
+  } else {
+    const errorMsg = res.data?.error || 'Unable to place booking. Item may be out of stock.';
+    if (errEl) {
+      errEl.textContent = errorMsg;
+      errEl.style.display = 'block';
+    } else {
+      alert(errorMsg);
+    }
+  }
+}
+
+function initRealtimeMarketplace() {
+  if (!window.Realtime) return;
+
+  // When a new listing is created by a restaurant
+  window.Realtime.on('listing_created', (data) => {
+    window.Realtime.notify('New Surplus Food Available!', `${data.name} just listed by ${data.restaurant_name}!`, 'info');
+    loadMarketplaceListings();
+  });
+
+  // When a booking occurs (atomic inventory decrement)
+  window.Realtime.on('booking_created', (data) => {
+    const cardAvail = document.getElementById(`cardAvail-${data.listing_id}`);
+    if (cardAvail) {
+      const remaining = data.quantity_available;
+      if (remaining <= 0 || data.listing_status === 'sold_out') {
+        cardAvail.className = 'food-card-availability sold-out';
+        cardAvail.innerHTML = '<span class="dot"></span>Sold Out';
+        const btn = document.querySelector(`#foodCard-${data.listing_id} .food-card-btn`);
+        if (btn) {
+          btn.disabled = true;
+          btn.style.opacity = '0.6';
+          btn.style.cursor = 'not-allowed';
+          btn.textContent = 'Sold Out';
+        }
+      } else {
+        cardAvail.innerHTML = `<span class="dot"></span>${remaining} left`;
+      }
+    }
+  });
+
+  // When listing is updated
+  window.Realtime.on('listing_updated', () => loadMarketplaceListings());
+  window.Realtime.on('listing_deleted', () => loadMarketplaceListings());
+}
+
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
   initPasswordToggles();
   initLoginForm();
   initSignupForm();
   updateAuthUI();
+  initMarketplace();
 
   // ─── Auth persistence: redirect logged-in users away from auth pages ────────
   const isAuthPage = !!document.getElementById('loginPage') || !!document.getElementById('signupPage');
   if (isAuthPage && window.Auth && window.Auth.isLoggedIn()) {
-    window.location.href = 'index.html';
+    const user = window.Auth.getUser();
+    if (user?.account_type === 'admin' || user?.is_staff || user?.is_superuser) {
+      window.location.href = 'admin-dashboard.html';
+    } else if (user?.account_type === 'restaurant' || user?.account_type === 'business') {
+      window.location.href = 'restaurant-dashboard.html';
+    } else {
+      window.location.href = 'index.html';
+    }
   }
 });
+

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Restaurant Partner Dashboard — Too Fresh To Waste</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <style>
+    .order-action-btn {
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all var(--transition-fast);
+    }
+    .btn-confirm { background: #DBEAFE; color: #1E40AF; border-color: #BFDBFE; }
+    .btn-confirm:hover { background: #BFDBFE; }
+    .btn-ready { background: #EDE9FE; color: #5B21B6; border-color: #DDD6FE; }
+    .btn-ready:hover { background: #DDD6FE; }
+    .btn-complete { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+    .btn-complete:hover { background: #A7F3D0; }
+    .btn-cancel { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+    .btn-cancel:hover { background: #FECACA; }
+  </style>
+</head>
+<body>
+
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <aside class="dash-sidebar">
+      <div class="dash-brand">
+        <a href="index.html" class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C8 2 5 5 5 9c0 2.5 1.2 4.7 3 6.1V20a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-4.9c1.8-1.4 3-3.6 3-6.1 0-4-3-7-7-7zm-1 16v-3h2v3h-2zm3-5.3V17h-4v-4.3A5 5 0 0 1 7 9c0-2.8 2.2-5 5-5s5 2.2 5 5a5 5 0 0 1-3 4.7z"/>
+            </svg>
+          </div>
+          <div class="logo-text">
+            <span class="brand-name">Too Fresh</span>
+            <span class="brand-tagline">Partner Dashboard</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="dash-nav">
+        <a href="#overview" class="dash-nav-item active" data-tab="overview">
+          <span>📊 Overview &amp; Stats</span>
+        </a>
+        <a href="#bookings" class="dash-nav-item" data-tab="bookings">
+          <span>🔔 Incoming Orders</span>
+          <span class="dash-nav-badge" id="incomingBadge">0</span>
+        </a>
+        <a href="#listings" class="dash-nav-item" data-tab="listings">
+          <span>🥐 Surplus Food Listings</span>
+        </a>
+        <a href="index.html#discover" class="dash-nav-item" target="_blank">
+          <span>🌐 View Public Marketplace ↗</span>
+        </a>
+      </nav>
+
+      <div style="padding-top:20px; border-top:1px solid #E2E8F0;">
+        <div id="partnerInfo" style="margin-bottom:12px; font-size:0.85rem; color:#64748B;">
+          <strong id="partnerName" style="color:#1E293B; display:block; font-size:0.95rem;">Loading Partner...</strong>
+          <span id="partnerEmail"></span>
+        </div>
+        <button class="btn btn-outline btn-sm" id="partnerLogoutBtn" style="width:100%;">Log Out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dash-main">
+      <header class="dash-topbar">
+        <div>
+          <h2 id="pageTitle" style="font-size:1.35rem; font-weight:800; color:#1E293B;">Kitchen Overview</h2>
+          <span style="font-size:0.82rem; color:#64748B;">Real-time surplus food &amp; order synchronization</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <span class="live-pulse">Connected to Live Kitchen Feed</span>
+          <button class="btn btn-primary btn-sm" id="openNewListingModalBtn">
+            + Create Surplus Box
+          </button>
+        </div>
+      </header>
+
+      <div class="dash-content">
+
+        <!-- TAB 1: OVERVIEW -->
+        <section id="tab-overview" class="tab-pane">
+          <!-- Stat Cards -->
+          <div class="dash-stats-grid">
+            <div class="dash-stat-card">
+              <div class="dash-stat-icon green">💰</div>
+              <div>
+                <div class="dash-stat-value" id="statRevenue">₹0</div>
+                <div class="dash-stat-label">Total Revenue</div>
+              </div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-icon pink">🍽️</div>
+              <div>
+                <div class="dash-stat-value" id="statItemsSold">0</div>
+                <div class="dash-stat-label">Meals Rescued</div>
+              </div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-icon blue">📦</div>
+              <div>
+                <div class="dash-stat-value" id="statActiveListings">0</div>
+                <div class="dash-stat-label">Active Listings</div>
+              </div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-icon amber">🔔</div>
+              <div>
+                <div class="dash-stat-value" id="statPendingBookings">0</div>
+                <div class="dash-stat-label">Orders Pending Action</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Incoming Orders -->
+          <div class="data-panel">
+            <div class="data-panel-header">
+              <div>
+                <h3 style="font-size:1.1rem; font-weight:700; color:#1E293B;">Recent Customer Bookings</h3>
+                <p style="font-size:0.82rem; color:#64748B;">Orders update in real time as customers reserve food</p>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="switchTab('bookings')">View All Bookings →</button>
+            </div>
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Item Reserved</th>
+                    <th>Qty</th>
+                    <th>Amount</th>
+                    <th>Pickup Window</th>
+                    <th>Verification PIN</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="overviewOrdersTable">
+                  <tr><td colspan="9" style="text-align:center; padding:30px; color:#888;">Loading orders...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: INCOMING BOOKINGS -->
+        <section id="tab-bookings" class="tab-pane" style="display:none;">
+          <div class="data-panel">
+            <div class="data-panel-header">
+              <div>
+                <h3 style="font-size:1.1rem; font-weight:700; color:#1E293B;">All Customer Reservations</h3>
+                <p style="font-size:0.82rem; color:#64748B;">Manage order confirmation, packing, and completion</p>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <select id="bookingsStatusFilter" class="form-input" style="padding:6px 12px; font-size:0.85rem;" onchange="loadBookings()">
+                  <option value="">All Statuses</option>
+                  <option value="CONFIRMED">Confirmed</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="READY_FOR_PICKUP">Ready for Pickup</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Contact</th>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                    <th>Pickup Window</th>
+                    <th>PIN</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="allOrdersTable">
+                  <tr><td colspan="10" style="text-align:center; padding:30px; color:#888;">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: SURPLUS FOOD LISTINGS -->
+        <section id="tab-listings" class="tab-pane" style="display:none;">
+          <div class="data-panel">
+            <div class="data-panel-header">
+              <div>
+                <h3 style="font-size:1.1rem; font-weight:700; color:#1E293B;">My Surplus Food Listings</h3>
+                <p style="font-size:0.82rem; color:#64748B;">Surplus boxes listed for public customer pickup</p>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="openCreateListingModal()">+ New Listing</button>
+            </div>
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Photo</th>
+                    <th>Item Name</th>
+                    <th>Category</th>
+                    <th>Original</th>
+                    <th>Discounted</th>
+                    <th>Available / Total</th>
+                    <th>Pickup Window</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="myListingsTable">
+                  <tr><td colspan="9" style="text-align:center; padding:30px; color:#888;">Loading listings...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== CREATE LISTING MODAL ==================== -->
+  <div class="modal-backdrop" id="createListingModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">🥐 List Surplus Food Item</h3>
+        <button class="modal-close" onclick="closeCreateListingModal()">&times;</button>
+      </div>
+      <form id="createListingForm">
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Food / Box Name *</label>
+            <input type="text" id="listingName" class="form-input" placeholder="e.g. Sourdough & Croissant Surprise Box" required />
+          </div>
+
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Description *</label>
+            <textarea id="listingDesc" class="form-input" rows="2" placeholder="Describe the delicious items included..." required></textarea>
+          </div>
+
+          <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select id="listingCategory" class="form-input">
+                <option value="bakery">Bakery &amp; Pastries</option>
+                <option value="meals">Prepared Meals &amp; Combos</option>
+                <option value="desserts">Desserts &amp; Sweets</option>
+                <option value="beverages">Beverages &amp; Juices</option>
+                <option value="snacks">Snacks &amp; Quick Bites</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Quantity Available *</label>
+              <input type="number" id="listingQty" class="form-input" min="1" value="3" required />
+            </div>
+          </div>
+
+          <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+            <div class="form-group">
+              <label class="form-label">Original Price (₹) *</label>
+              <input type="number" id="listingOrigPrice" class="form-input" step="0.01" min="1" placeholder="300" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Discounted Price (₹) *</label>
+              <input type="number" id="listingDiscPrice" class="form-input" step="0.01" min="1" placeholder="99" required />
+            </div>
+          </div>
+
+          <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+            <div class="form-group">
+              <label class="form-label">Pickup Start Time *</label>
+              <input type="text" id="listingPickupStart" class="form-input" value="7:00 PM" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pickup End Time *</label>
+              <input type="text" id="listingPickupEnd" class="form-input" value="9:00 PM" required />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Food Image Preset or URL</label>
+            <select id="listingImagePreset" class="form-input" onchange="document.getElementById('listingImage').value = this.value">
+              <option value="assets/images/bakery_box.jpg">Bakery Pastry Box</option>
+              <option value="assets/images/cafe_box.jpg">Café Sandwich &amp; Salad Box</option>
+              <option value="assets/images/dessert_box.jpg">Gourmet Desserts &amp; Macarons</option>
+              <option value="assets/images/hero_food.jpg">Fresh Sourdough Bread</option>
+            </select>
+            <input type="text" id="listingImage" class="form-input" style="margin-top:6px;" value="assets/images/bakery_box.jpg" placeholder="Custom Image URL or path" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Pickup Instructions</label>
+            <input type="text" id="listingInstructions" class="form-input" value="Show your TFTW order number at the checkout counter." />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeCreateListingModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveListingBtn">Publish to Marketplace ✓</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/realtime.js"></script>
+  <script>
+    // Guard: Only business/restaurant/admin users allowed
+    if (!Auth.isLoggedIn()) {
+      window.location.href = 'login.html';
+    }
+
+    const user = Auth.getUser();
+    if (user && user.account_type === 'customer' && !user.is_staff && !user.is_superuser) {
+      alert('Access restricted to Restaurant Partners.');
+      window.location.href = 'index.html';
+    }
+
+    document.getElementById('partnerLogoutBtn').addEventListener('click', async () => {
+      await Auth.logout();
+      window.location.href = 'index.html';
+    });
+
+    let currentRestaurant = null;
+    let restaurantListings = [];
+    let restaurantBookings = [];
+
+    async function initDashboard() {
+      // 1. Fetch restaurant profile
+      const profRes = await API.getMyRestaurantProfile();
+      if (profRes.ok && profRes.data) {
+        currentRestaurant = profRes.data;
+        document.getElementById('partnerName').textContent = currentRestaurant.business_name;
+        document.getElementById('partnerEmail').textContent = currentRestaurant.city + ' · ' + (currentRestaurant.phone || user.email);
+      }
+
+      await Promise.all([loadListings(), loadBookings()]);
+      updateStats();
+    }
+
+    async function loadListings() {
+      const res = await API.getMyListings();
+      if (res.ok && res.data) {
+        restaurantListings = res.data;
+        renderListings();
+      }
+    }
+
+    async function loadBookings() {
+      const filter = document.getElementById('bookingsStatusFilter').value;
+      const res = await API.getBookings(filter);
+      if (res.ok && res.data) {
+        restaurantBookings = res.data;
+        renderBookings();
+        updateStats();
+      }
+    }
+
+    function renderListings() {
+      const tbody = document.getElementById('myListingsTable');
+      if (restaurantListings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:#888;">No surplus listings created yet. Click "+ New Listing" to publish!</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = restaurantListings.map(l => {
+        const statusBadge = l.status === 'active' ? '<span class="badge badge-active">Active</span>' :
+                            l.status === 'sold_out' ? '<span class="badge badge-sold-out">Sold Out</span>' :
+                            '<span class="badge badge-inactive">Inactive</span>';
+
+        return `
+          <tr>
+            <td><img src="${l.image}" alt="" style="width:48px; height:48px; border-radius:8px; object-fit:cover;" onerror="this.src='assets/images/bakery_box.jpg'"/></td>
+            <td><strong>${l.name}</strong><br/><span style="font-size:0.75rem; color:#888;">${l.description.slice(0, 45)}...</span></td>
+            <td><span style="text-transform:capitalize;">${l.category}</span></td>
+            <td><span style="text-decoration:line-through; color:#999;">₹${parseFloat(l.original_price).toFixed(2)}</span></td>
+            <td><strong style="color:var(--color-primary);">₹${parseFloat(l.discounted_price).toFixed(2)}</strong></td>
+            <td><strong>${l.quantity_available}</strong> / ${l.quantity}</td>
+            <td>${l.pickup_start} – ${l.pickup_end}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <button class="order-action-btn ${l.status === 'active' ? 'btn-cancel' : 'btn-confirm'}" onclick="toggleListingStatus(${l.id}, '${l.status === 'active' ? 'inactive' : 'active'}')">
+                ${l.status === 'active' ? 'Deactivate' : 'Activate'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function toggleListingStatus(id, newStatus) {
+      const res = await API.updateListing(id, { status: newStatus });
+      if (res.ok) {
+        Realtime.notify('Listing Updated', `Item is now ${newStatus}`, 'info');
+        loadListings();
+      }
+    }
+
+    function renderBookings() {
+      const overviewTbody = document.getElementById('overviewOrdersTable');
+      const allTbody = document.getElementById('allOrdersTable');
+
+      if (restaurantBookings.length === 0) {
+        const emptyHtml = `<tr><td colspan="10" style="text-align:center; padding:30px; color:#888;">No orders received yet.</td></tr>`;
+        overviewTbody.innerHTML = emptyHtml;
+        allTbody.innerHTML = emptyHtml;
+        return;
+      }
+
+      const rowsHtml = restaurantBookings.map(b => {
+        const badgeClass = b.status === 'CONFIRMED' ? 'badge-confirmed' :
+                           b.status === 'READY_FOR_PICKUP' ? 'badge-ready' :
+                           b.status === 'COMPLETED' ? 'badge-completed' :
+                           b.status === 'CANCELLED' ? 'badge-cancelled' : 'badge-pending';
+
+        let actionBtns = '';
+        if (b.status === 'PENDING') {
+          actionBtns = `<button class="order-action-btn btn-confirm" onclick="updateOrderStatus(${b.id}, 'CONFIRMED')">Confirm</button>
+                        <button class="order-action-btn btn-cancel" onclick="updateOrderStatus(${b.id}, 'CANCELLED')">Cancel</button>`;
+        } else if (b.status === 'CONFIRMED') {
+          actionBtns = `<button class="order-action-btn btn-ready" onclick="updateOrderStatus(${b.id}, 'READY_FOR_PICKUP')">Ready for Pickup</button>
+                        <button class="order-action-btn btn-cancel" onclick="updateOrderStatus(${b.id}, 'CANCELLED')">Cancel</button>`;
+        } else if (b.status === 'READY_FOR_PICKUP') {
+          actionBtns = `<button class="order-action-btn btn-complete" onclick="updateOrderStatus(${b.id}, 'COMPLETED')">Mark Collected ✓</button>`;
+        } else {
+          actionBtns = `<span style="font-size:0.75rem; color:#888;">No actions</span>`;
+        }
+
+        return `
+          <tr>
+            <td><strong>#${b.booking_number}</strong></td>
+            <td>${b.customer_name || 'Customer'}</td>
+            <td>${b.customer_phone || b.customer_email || '—'}</td>
+            <td>${b.listing_name}</td>
+            <td><strong>${b.quantity}</strong></td>
+            <td><strong>₹${parseFloat(b.total_amount).toFixed(2)}</strong></td>
+            <td>${b.pickup_start} – ${b.pickup_end}</td>
+            <td><code style="background:#FFF0F2; color:#FF788D; padding:2px 6px; border-radius:4px; font-weight:800;">${b.pickup_code || '----'}</code></td>
+            <td><span class="badge ${badgeClass}">${b.status.replace(/_/g, ' ')}</span></td>
+            <td><div style="display:flex; gap:6px;">${actionBtns}</div></td>
+          </tr>
+        `;
+      }).join('');
+
+      overviewTbody.innerHTML = rowsHtml;
+      allTbody.innerHTML = rowsHtml;
+    }
+
+    async function updateOrderStatus(id, newStatus) {
+      const res = await API.updateBookingStatus(id, newStatus);
+      if (res.ok) {
+        Realtime.notify('Order Updated', `Order status changed to ${newStatus}`, 'success');
+        loadBookings();
+      } else {
+        alert(res.data?.error || 'Failed to update order status.');
+      }
+    }
+
+    function updateStats() {
+      const activeListingsCount = restaurantListings.filter(l => l.status === 'active').length;
+      const pendingCount = restaurantBookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length;
+
+      let totalRevenue = 0;
+      let totalMeals = 0;
+
+      restaurantBookings.forEach(b => {
+        if (b.status !== 'CANCELLED') {
+          totalRevenue += parseFloat(b.total_amount || 0);
+          totalMeals += parseInt(b.quantity || 1);
+        }
+      });
+
+      document.getElementById('statRevenue').textContent = '₹' + totalRevenue.toFixed(2);
+      document.getElementById('statItemsSold').textContent = totalMeals;
+      document.getElementById('statActiveListings').textContent = activeListingsCount;
+      document.getElementById('statPendingBookings').textContent = pendingCount;
+      document.getElementById('incomingBadge').textContent = pendingCount;
+    }
+
+    // Modal helpers
+    function openCreateListingModal() {
+      document.getElementById('createListingModal').classList.add('open');
+    }
+    function closeCreateListingModal() {
+      document.getElementById('createListingModal').classList.remove('open');
+    }
+    document.getElementById('openNewListingModalBtn').addEventListener('click', openCreateListingModal);
+
+    // Form submit
+    document.getElementById('createListingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveListingBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Publishing...';
+
+      const payload = {
+        name: document.getElementById('listingName').value,
+        description: document.getElementById('listingDesc').value,
+        category: document.getElementById('listingCategory').value,
+        quantity: parseInt(document.getElementById('listingQty').value),
+        quantity_available: parseInt(document.getElementById('listingQty').value),
+        original_price: parseFloat(document.getElementById('listingOrigPrice').value),
+        discounted_price: parseFloat(document.getElementById('listingDiscPrice').value),
+        pickup_start: document.getElementById('listingPickupStart').value,
+        pickup_end: document.getElementById('listingPickupEnd').value,
+        image: document.getElementById('listingImage').value,
+        pickup_instructions: document.getElementById('listingInstructions').value,
+      };
+
+      const res = await API.createListing(payload);
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Publish to Marketplace ✓';
+
+      if (res.ok) {
+        Realtime.notify('Listing Published!', `${payload.name} is now live on the customer marketplace!`, 'success');
+        closeCreateListingModal();
+        document.getElementById('createListingForm').reset();
+        await loadListings();
+      } else {
+        const err = res.data ? JSON.stringify(res.data) : 'Failed to create listing.';
+        alert('Error: ' + err);
+      }
+    });
+
+    // Navigation Tabs
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.dash-nav-item').forEach(el => el.classList.remove('active'));
+
+      const pane = document.getElementById('tab-' + tabId);
+      if (pane) pane.style.display = 'block';
+
+      const navItem = document.querySelector(`[data-tab="${tabId}"]`);
+      if (navItem) navItem.classList.add('active');
+
+      const titleMap = {
+        overview: 'Kitchen Overview',
+        bookings: 'Incoming Orders',
+        listings: 'Surplus Food Listings',
+      };
+      document.getElementById('pageTitle').textContent = titleMap[tabId] || 'Dashboard';
+    }
+
+    document.querySelectorAll('.dash-nav-item[data-tab]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchTab(item.dataset.tab);
+      });
+    });
+
+    // ─── Realtime Event Listeners ───
+    Realtime.on('booking_created', (data) => {
+      // Check if this booking is for this restaurant
+      if (currentRestaurant && data.restaurant_id === currentRestaurant.id) {
+        Realtime.notify('🚨 New Order Received!', `Order #${data.booking.booking_number}: ${data.customer_name} reserved ${data.booking.quantity}x ${data.booking.listing_name}!`, 'success', true);
+        loadBookings();
+        loadListings();
+      }
+    });
+
+    Realtime.on('booking_status_changed', (data) => {
+      loadBookings();
+      loadListings();
+    });
+
+    initDashboard();
+  </script>
+</body>
+</html>

@@ -64,13 +64,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     ACCOUNT_TYPE_CHOICES = [
         ('customer', 'Customer'),
-        ('business', 'Business'),
+        ('restaurant', 'Restaurant'),
+        ('business', 'Business'),  # alias for restaurant
+        ('admin', 'Admin'),
     ]
 
     # ── Core identity ──────────────────────────────────────────────────────────
     email = models.EmailField(unique=True, db_index=True)
     first_name = models.CharField(max_length=80)
     last_name = models.CharField(max_length=80)
+    phone = models.CharField(max_length=20, blank=True, default='')
     account_type = models.CharField(
         max_length=20,
         choices=ACCOUNT_TYPE_CHOICES,
@@ -83,9 +86,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
 
-    # ── Future-ready fields (nullable for now) ─────────────────────────────────
-    # phone         = models.CharField(max_length=20, blank=True)
-    # profile_photo = models.ImageField(upload_to='avatars/', null=True, blank=True)
 
     objects = UserManager()
 
@@ -105,3 +105,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
+
+    @property
+    def is_customer(self):
+        return self.account_type == 'customer'
+
+    @property
+    def is_restaurant(self):
+        return self.account_type in ('restaurant', 'business')
+
+    @property
+    def is_admin_user(self):
+        return self.account_type == 'admin' or self.is_staff or self.is_superuser

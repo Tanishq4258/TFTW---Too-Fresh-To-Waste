@@ -19,6 +19,7 @@ ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split('
 
 # ─── Application definition ───────────────────────────────────────────────────
 INSTALLED_APPS = [
+    'daphne',                                         # ASGI server for Channels (must be before django.contrib.staticfiles)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -31,9 +32,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'channels',
 
     # Local
     'apps.accounts',
+    'apps.marketplace',
 ]
 
 MIDDLEWARE = [
@@ -66,6 +69,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'tftw_project.wsgi.application'
+ASGI_APPLICATION = 'tftw_project.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
 
 # ─── Database ─────────────────────────────────────────────────────────────────
 if os.getenv('DB_NAME') and os.getenv('DB_USER') and os.getenv('DB_PASSWORD'):
@@ -104,9 +115,12 @@ TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-# ─── Static files ─────────────────────────────────────────────────────────────
+# ─── Static & Media files ─────────────────────────────────────────────────────
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 # ─── Django REST Framework ────────────────────────────────────────────────────
 REST_FRAMEWORK = {
@@ -134,7 +148,7 @@ SIMPLE_JWT = {
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
 # Allow local static HTML files and local dev servers
-CORS_ALLOWED_ORIGINS = [
+default_cors_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:5500',
@@ -142,6 +156,12 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
 ]
-# For dev: allow null origin (file:// opened HTML files)
+env_cors = os.getenv('CORS_ALLOWED_ORIGINS')
+if env_cors:
+    default_cors_origins.extend([origin.strip() for origin in env_cors.split(',') if origin.strip()])
+
+CORS_ALLOWED_ORIGINS = default_cors_origins
+# For dev: allow all origins if DEBUG=True
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
+

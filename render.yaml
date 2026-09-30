@@ -1,0 +1,37 @@
+services:
+  # ─── PostgreSQL Database ───────────────────────────────────────────────────────
+  - type: postgres
+    name: tftw-database
+    env: docker
+    plan: free
+    ipAllowList: []
+
+  # ─── Backend ASGI Web Service (Daphne / Django Channels) ──────────────────────
+  - type: web
+    name: tftw-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt && python manage.py migrate && python manage.py seed_tftw_data"
+    startCommand: "cd backend && daphne -b 0.0.0.0 -p $PORT tftw_project.asgi:application"
+    plan: free
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tftw-database
+          property: connectionString
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://toofreshtowaste.com"
+
+  # ─── Static Frontend Site ────────────────────────────────────────────────────
+  - type: static
+    name: tftw-frontend
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

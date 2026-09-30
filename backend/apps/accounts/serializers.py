@@ -14,19 +14,20 @@ User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
     """
-    Maps exactly to the signup form fields:
-      firstName, lastName, email, password, confirmPassword, account_type
+    Maps to the signup form fields:
+      first_name, last_name, email, password, confirm_password, account_type, phone
     """
     password = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True)
+    phone = serializers.CharField(required=False, allow_blank=True, default='')
     account_type = serializers.ChoiceField(
-        choices=['customer', 'business'],
+        choices=['customer', 'business', 'restaurant', 'admin'],
         default='customer',
     )
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'password', 'confirm_password', 'account_type')
+        fields = ('first_name', 'last_name', 'email', 'password', 'confirm_password', 'account_type', 'phone')
 
     def validate_email(self, value):
         email = value.lower().strip()
@@ -47,13 +48,37 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('confirm_password')
+        account_type = validated_data.get('account_type', 'customer')
+        # Normalize 'business' to 'restaurant'
+        if account_type == 'business':
+            account_type = 'restaurant'
+
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
-            account_type=validated_data.get('account_type', 'customer'),
+            phone=validated_data.get('phone', ''),
+            account_type=account_type,
         )
+
+        # If restaurant, auto-create their initial Restaurant profile
+        if account_type == 'restaurant':
+            from apps.marketplace.models import Restaurant
+            Restaurant.objects.get_or_create(
+                owner=user,
+                defaults={
+                    'business_name': f"{user.first_name}'s Food Partner",
+                    'description': 'Local food partner fighting food waste.',
+                    'category': 'Bakery & Cafe',
+                    'address': 'Main Market',
+                    'city': 'Chandigarh',
+                    'phone': user.phone or '+91 98765 43210',
+                    'banner_image': 'assets/images/hero_food.jpg',
+                    'status': 'active',
+                }
+            )
+
         return user
 
 
@@ -70,6 +95,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['last_name'] = user.last_name
         token['email'] = user.email
         token['account_type'] = user.account_type
+        token['is_staff'] = user.is_staff
+        token['is_superuser'] = user.is_superuser
         return token
 
     def validate(self, attrs):
@@ -85,6 +112,7 @@ class UserSerializer(serializers.ModelSerializer):
     """Safe, read-only representation of the logged-in user."""
 
     full_name = serializers.SerializerMethodField()
+    restaurant_id = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -94,7 +122,11 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'full_name',
+            'phone',
             'account_type',
+            'is_staff',
+            'is_superuser',
+            'restaurant_id',
             'date_joined',
             'last_login',
         )
@@ -102,3 +134,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return obj.get_full_name()
+
+    def get_restaurant_id(self, obj):
+        if hasattr(obj, 'restaurant_profile'):
+            return obj.restaurant_profile.id
+        return None
+
