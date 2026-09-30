@@ -21,12 +21,12 @@ class UserAdmin(BaseUserAdmin):
     )
     readonly_fields = ('date_joined', 'last_login')
 
-    # add_fieldsets = (
-    #     (None, {
-    #         'classes': ('wide',),
-    #         'fields': ('email', 'first_name', 'last_name', 'account_type', 'password1', 'password2'),
-    #     }),
-    # )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'first_name', 'last_name', 'account_type', 'password1', 'password2'),
+        }),
+    )
 
     # email is the username field
     filter_horizontal = ('groups', 'user_permissions')

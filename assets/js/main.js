@@ -475,11 +475,73 @@ function initSignupForm() {
   });
 }
 
+// ---- Auth-aware UI ----
+function updateAuthUI() {
+  if (!window.Auth || !window.Auth.isLoggedIn()) return;
+
+  const user = window.Auth.getUser();
+  const firstName = user?.first_name || 'User';
+
+  // ── Desktop navbar: replace Login/Signup with greeting + Logout ──
+  const navActions = document.querySelector('.nav-actions');
+  if (navActions) {
+    navActions.innerHTML = `
+      <span class="nav-greeting" style="color:white; font-size:0.9rem; opacity:0.9; margin-right:8px;">
+        Hi, <strong>${firstName}</strong>
+      </span>
+      <button class="btn btn-white btn-sm" id="navLogoutBtn" style="color:var(--color-primary); cursor:pointer; border:none;">
+        Log Out
+      </button>
+    `;
+    document.getElementById('navLogoutBtn').addEventListener('click', handleLogout);
+  }
+
+  // ── Mobile navbar: replace Login/Signup with greeting + Logout ──
+  const mobileNavActions = document.querySelector('.mobile-nav-actions');
+  if (mobileNavActions) {
+    mobileNavActions.innerHTML = `
+      <span style="color:var(--color-text-muted); font-size:0.95rem;">
+        Signed in as <strong>${firstName}</strong>
+      </span>
+      <button class="btn btn-primary" id="mobileLogoutBtn" style="cursor:pointer; border:none;">
+        Log Out
+      </button>
+    `;
+    document.getElementById('mobileLogoutBtn').addEventListener('click', handleLogout);
+  }
+
+  // ── Update ALL remaining links to login.html / signup.html across the page ──
+  // These links would just bounce the user back, so redirect them or relabel them.
+  document.querySelectorAll('a[href="signup.html"], a[href="login.html"]').forEach(link => {
+    // Skip navbar links (already handled above)
+    if (link.closest('.nav-actions') || link.closest('.mobile-nav-actions')) return;
+
+    // For CTA buttons: change to scroll to #discover (the food listings section)
+    if (link.id === 'ctaSignupBtn' || link.id === 'partnerBtn') {
+      link.href = '#discover';
+      if (link.id === 'ctaSignupBtn') link.textContent = '🍽️ Browse Food';
+    }
+
+    // For footer links: just point to # so they don't bounce
+    if (link.closest('footer')) {
+      link.href = '#';
+      link.addEventListener('click', (e) => e.preventDefault());
+    }
+  });
+}
+
+async function handleLogout() {
+  if (!window.Auth) return;
+  await window.Auth.logout();
+  window.location.href = 'index.html';
+}
+
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
   initPasswordToggles();
   initLoginForm();
   initSignupForm();
+  updateAuthUI();
 
   // ─── Auth persistence: redirect logged-in users away from auth pages ────────
   const isAuthPage = !!document.getElementById('loginPage') || !!document.getElementById('signupPage');

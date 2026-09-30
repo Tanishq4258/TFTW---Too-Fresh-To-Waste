@@ -6,7 +6,6 @@ Reads all secrets from environment variables (.env file via python-dotenv).
 import os
 from pathlib import Path
 from datetime import timedelta
-# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 # Load .env from the backend directory
