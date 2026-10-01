@@ -176,6 +176,77 @@ const Auth = {
     this.clearTokens();
     return false;
   },
+
+  /**
+   * Verify email using the token from the verification email link.
+   * @param {string} token
+   */
+  async verifyEmail(token) {
+    const res = await this._request('/verify-email/', {
+      method: 'POST',
+      body: { token },
+    });
+
+    if (res.ok && res.data.tokens) {
+      this.saveTokens(res.data.tokens.access, res.data.tokens.refresh);
+      this.saveUser(res.data.user);
+    }
+
+    return res;
+  },
+
+  /**
+   * Resend verification email.
+   * @param {string} email
+   */
+  async resendVerification(email) {
+    return this._request('/resend-verification/', {
+      method: 'POST',
+      body: { email },
+    });
+  },
+
+  /**
+   * Request a password reset email.
+   * @param {string} email
+   */
+  async forgotPassword(email) {
+    return this._request('/forgot-password/', {
+      method: 'POST',
+      body: { email },
+    });
+  },
+
+  /**
+   * Reset password using the token from the reset email.
+   * @param {string} token
+   * @param {string} password
+   * @param {string} confirmPassword
+   */
+  async resetPassword(token, password, confirmPassword) {
+    return this._request('/reset-password/', {
+      method: 'POST',
+      body: { token, password, confirm_password: confirmPassword },
+    });
+  },
+
+  /**
+   * Initiate Google Sign-In.
+   * Fetches the Google OAuth URL from the backend and redirects the browser.
+   * The client secret never leaves the server.
+   */
+  async initiateGoogleLogin() {
+    try {
+      const res = await this._request('/google/init/', { method: 'GET' });
+      if (res.ok && res.data.auth_url) {
+        window.location.href = res.data.auth_url;
+      } else {
+        return { ok: false, error: res.data?.error || 'Google Sign-In is not configured.' };
+      }
+    } catch (err) {
+      return { ok: false, error: 'Network error. Please try again.' };
+    }
+  },
 };
 
 // Make Auth globally available

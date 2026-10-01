@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signing in with Google… — Too Fresh To Waste</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <style>
+    body { background: #F8FAFC; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    .callback-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 48px 40px;
+      text-align: center;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+    }
+    .spin { animation: spin 1s linear infinite; display: inline-block; font-size: 2.5rem; margin-bottom: 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h2 { font-size: 1.3rem; font-weight: 800; color: #1E293B; margin: 0 0 10px; }
+    p { color: #64748B; font-size: 0.9rem; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="callback-card">
+    <div class="spin">⚙️</div>
+    <h2 id="cbTitle">Completing sign-in…</h2>
+    <p id="cbMessage">Securely finishing your Google authentication. Please wait.</p>
+  </div>
+
+  <script src="assets/js/auth.js"></script>
+  <script>
+    /**
+     * Google OAuth callback handler.
+     * The backend redirects here after successful OAuth with:
+     *   ?access=...&refresh=...&user=...&redirect=index.html
+     *
+     * We store the tokens in localStorage and redirect to the appropriate page.
+     * This keeps the client secret on the server (never sent to frontend).
+     */
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const accessToken = params.get('access');
+      const refreshToken = params.get('refresh');
+      const userJson = params.get('user');
+      const redirectPage = params.get('redirect') || 'index.html';
+      const googleError = params.get('google_error');
+
+      if (googleError) {
+        document.getElementById('cbTitle').textContent = 'Sign-in Failed';
+        const errorMessages = {
+          'access_denied': 'You cancelled the Google sign-in. Please try again.',
+          'state_mismatch': 'Security check failed. Please try signing in again.',
+          'token_exchange_failed': 'Could not complete sign-in with Google. Please try again.',
+          'userinfo_failed': 'Could not fetch your Google profile. Please try again.',
+          'account_error': 'There was a problem with your Google account. Please contact support.',
+          'no_code': 'Google did not return an authorization code. Please try again.',
+        };
+        document.getElementById('cbMessage').textContent =
+          errorMessages[googleError] || 'Google sign-in was unsuccessful. Please try again.';
+        setTimeout(() => { window.location.href = 'login.html'; }, 3000);
+        return;
+      }
+
+      if (!accessToken || !refreshToken) {
+        document.getElementById('cbTitle').textContent = 'Sign-in Error';
+        document.getElementById('cbMessage').textContent = 'Authentication data is missing. Redirecting to login…';
+        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+        return;
+      }
+
+      try {
+        // Store tokens using Auth module
+        if (window.Auth) {
+          window.Auth.saveTokens(accessToken, refreshToken);
+          if (userJson) {
+            const user = JSON.parse(decodeURIComponent(userJson));
+            window.Auth.saveUser(user);
+          }
+        } else {
+          localStorage.setItem('tftw_access', accessToken);
+          localStorage.setItem('tftw_refresh', refreshToken);
+          if (userJson) {
+            localStorage.setItem('tftw_user', decodeURIComponent(userJson));
+          }
+        }
+
+        document.getElementById('cbMessage').textContent = 'Success! Redirecting you now…';
+        window.location.href = redirectPage;
+      } catch (err) {
+        document.getElementById('cbTitle').textContent = 'Sign-in Error';
+        document.getElementById('cbMessage').textContent = 'Could not complete sign-in. Redirecting to login…';
+        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+      }
+    })();
+  </script>
+</body>
+</html>

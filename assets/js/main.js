@@ -258,6 +258,36 @@ function initLoginForm() {
   const passwordInput = document.getElementById('loginPassword');
   const submitBtn = document.getElementById('loginSubmit');
 
+  // ── Wire "Forgot password?" link ──
+  const forgotLink = form.closest('.auth-form-inner')?.querySelector('.form-forgot') ||
+                     document.querySelector('.form-forgot');
+  if (forgotLink) {
+    forgotLink.href = 'forgot-password.html';
+  }
+
+  // ── Wire Google Sign-In button ──
+  const googleLoginBtn = document.getElementById('googleLoginBtn');
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener('click', async () => {
+      googleLoginBtn.disabled = true;
+      googleLoginBtn.textContent = 'Connecting to Google…';
+      if (window.Auth) {
+        const result = await window.Auth.initiateGoogleLogin();
+        // If we get here, it means the redirect didn't happen (error)
+        if (result && !result.ok) {
+          googleLoginBtn.disabled = false;
+          googleLoginBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg> Continue with Google`;
+          showError('loginEmail', result.error || 'Google Sign-In is not available right now.');
+        }
+      }
+    });
+  }
+
   if (emailInput) {
     emailInput.addEventListener('blur', () => {
       const val = emailInput.value.trim();
@@ -307,11 +337,14 @@ function initLoginForm() {
       const res = await window.Auth.login(email, password);
 
       if (res.ok) {
-        // Show success banner then redirect
+        const u = res.data?.user || window.Auth.getUser();
+
+
+
+        // Normal success — show success banner then redirect
         const successEl = document.getElementById('loginSuccess');
         if (successEl) successEl.classList.add('show');
 
-        const u = res.data?.user || window.Auth.getUser();
         let target = 'index.html';
         if (u?.account_type === 'admin' || u?.is_staff || u?.is_superuser) {
           target = 'admin-dashboard.html';
@@ -320,15 +353,45 @@ function initLoginForm() {
         }
         setTimeout(() => { window.location.href = target; }, 1000);
       } else {
+        if (res.data?.error === 'unverified_email') {
+          const successEl = document.getElementById('loginSuccess');
+          if (successEl) {
+            successEl.style.background = '#FEF3C7';
+            successEl.style.borderColor = '#FCD34D';
+            successEl.style.color = '#92400E';
+            successEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Please verify your email to log in. <a href="#" id="resendFromLogin" style="color:#92400E;font-weight:700;text-decoration:underline;">Resend verification email</a>`;
+            successEl.classList.add('show');
+
+            document.getElementById('resendFromLogin')?.addEventListener('click', async (ev) => {
+              ev.preventDefault();
+              if (window.Auth) {
+                const r = await window.Auth.resendVerification(email);
+                const msg = r.data?.message || 'Verification email sent! Check your inbox.';
+                successEl.innerHTML = `✓ ${msg}`;
+                successEl.style.background = '';
+                successEl.style.borderColor = '';
+                successEl.style.color = '';
+              }
+            });
+          }
+          submitBtn.classList.remove('btn-loading');
+          submitBtn.disabled = false;
+          return;
+        }
+
         // Map backend field errors to the UI
         const errors = res.data?.errors || {};
         const nonField = errors.non_field_errors || errors.detail;
         if (nonField) {
-          // Show a generic credential error on the password field
           showError('loginPassword', Array.isArray(nonField) ? nonField[0] : nonField);
         }
         if (errors.email) showError('loginEmail', Array.isArray(errors.email) ? errors.email[0] : errors.email);
         if (errors.password) showError('loginPassword', Array.isArray(errors.password) ? errors.password[0] : errors.password);
+        // Rate limit
+        if (res.data?.error && (res.status === 429 || res.data.error.includes('Too many'))) {
+          showError('loginPassword', res.data.error);
+        }
 
         submitBtn.classList.remove('btn-loading');
         submitBtn.disabled = false;
@@ -352,9 +415,32 @@ function initSignupForm() {
     email: document.getElementById('signupEmail'),
     password: document.getElementById('signupPassword'),
     confirmPassword: document.getElementById('signupConfirmPassword'),
+    phone: document.getElementById('signupPhone'),
   };
 
   const submitBtn = document.getElementById('signupSubmit');
+
+  // ── Wire Google Sign-Up button ──
+  const googleSignupBtn = document.getElementById('googleSignupBtn');
+  if (googleSignupBtn) {
+    googleSignupBtn.addEventListener('click', async () => {
+      googleSignupBtn.disabled = true;
+      googleSignupBtn.textContent = 'Connecting to Google…';
+      if (window.Auth) {
+        const result = await window.Auth.initiateGoogleLogin();
+        if (result && !result.ok) {
+          googleSignupBtn.disabled = false;
+          googleSignupBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg> Continue with Google`;
+          showError('signupEmail', result.error || 'Google Sign-In is not available right now.');
+        }
+      }
+    });
+  }
 
   // Account type toggle
   document.querySelectorAll('.account-type-btn').forEach(btn => {
@@ -450,11 +536,17 @@ function initSignupForm() {
         password: pwd,
         confirm_password: confirm,
         account_type: accountType,
+        phone: fields.phone?.value.trim() || '',
       });
 
       if (res.ok) {
         const successEl = document.getElementById('signupSuccess');
-        if (successEl) successEl.classList.add('show');
+        if (successEl) {
+          // Show email verification notice
+          successEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20,6 9,17 4,12"/></svg>
+            Account created! Check your email to verify your address 📧`;
+          successEl.classList.add('show');
+        }
         form.reset();
         document.querySelectorAll('.account-type-btn').forEach((b, i) => {
           b.classList.toggle('active', i === 0);
@@ -466,7 +558,7 @@ function initSignupForm() {
         if (u?.account_type === 'restaurant' || u?.account_type === 'business') {
           target = 'restaurant-dashboard.html';
         }
-        setTimeout(() => { window.location.href = target; }, 1200);
+        setTimeout(() => { window.location.href = target; }, 1800);
       } else {
         // Map backend validation errors to form fields
         const errors = res.data?.errors || {};
@@ -476,6 +568,7 @@ function initSignupForm() {
         if (errors.password)   showError('signupPassword',  Array.isArray(errors.password)   ? errors.password[0]   : errors.password);
         if (errors.confirm_password) showError('signupConfirmPassword', Array.isArray(errors.confirm_password) ? errors.confirm_password[0] : errors.confirm_password);
         if (errors.non_field_errors) showError('signupEmail', Array.isArray(errors.non_field_errors) ? errors.non_field_errors[0] : errors.non_field_errors);
+        if (res.data?.error) showError('signupEmail', res.data.error);
 
         submitBtn.classList.remove('btn-loading');
         submitBtn.disabled = false;
@@ -690,6 +783,11 @@ function renderMarketplaceCards() {
 
 // Modal controls
 window.openFoodModalById = function (id) {
+  if (window.Auth && !window.Auth.isLoggedIn()) {
+    window.location.href = 'login.html';
+    return;
+  }
+
   const listing = currentListings.find(l => l.id === id);
   if (!listing) return;
 
@@ -897,8 +995,84 @@ function initRealtimeMarketplace() {
   window.Realtime.on('listing_deleted', () => loadMarketplaceListings());
 }
 
+// ─── Route Guards ──────────────────────────────────────────────────────────────
+
+/**
+ * requireAuth: Verify with the backend that the user is authenticated.
+ * If not, redirect to login. Used on protected pages.
+ * @param {string} redirectTo - page to redirect to if not authenticated
+ */
+async function requireAuth(redirectTo = 'login.html') {
+  if (!window.Auth || !window.Auth.isLoggedIn()) {
+    window.location.href = redirectTo;
+    return false;
+  }
+  // Verify token is still valid with backend
+  const res = await window.Auth.me();
+  if (!res.ok) {
+    window.Auth.clearTokens();
+    window.location.href = redirectTo;
+    return false;
+  }
+  return true;
+}
+
+/**
+ * requireAdmin: Verify with the backend that the user has admin role.
+ * If not, redirect to login. Admin status is ALWAYS verified server-side.
+ */
+async function requireAdmin(redirectTo = 'login.html') {
+  if (!window.Auth || !window.Auth.isLoggedIn()) {
+    window.location.href = redirectTo;
+    return false;
+  }
+  const res = await window.Auth.me();
+  if (!res.ok) {
+    window.Auth.clearTokens();
+    window.location.href = redirectTo;
+    return false;
+  }
+  const user = res.data;
+  const isAdmin = user?.account_type === 'admin' || user?.is_staff || user?.is_superuser;
+  if (!isAdmin) {
+    // Do NOT redirect to a page that reveals admin exists — just go to login
+    window.location.href = redirectTo;
+    return false;
+  }
+  return true;
+}
+
+/**
+ * requireRestaurant: Verify with the backend that the user has restaurant/business role.
+ */
+async function requireRestaurant(redirectTo = 'login.html') {
+  if (!window.Auth || !window.Auth.isLoggedIn()) {
+    window.location.href = redirectTo;
+    return false;
+  }
+  const res = await window.Auth.me();
+  if (!res.ok) {
+    window.Auth.clearTokens();
+    window.location.href = redirectTo;
+    return false;
+  }
+  const user = res.data;
+  const isRestaurant = user?.account_type === 'restaurant' || user?.account_type === 'business' ||
+                       user?.is_staff || user?.is_superuser;
+  if (!isRestaurant) {
+    window.location.href = redirectTo;
+    return false;
+  }
+  return true;
+}
+
+// Expose guards globally so dashboard pages can use them
+window.requireAuth = requireAuth;
+window.requireAdmin = requireAdmin;
+window.requireRestaurant = requireRestaurant;
+
 // ---- Init ----
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initPasswordToggles();
   initLoginForm();
   initSignupForm();
@@ -916,6 +1090,27 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       window.location.href = 'index.html';
     }
+    return;
+  }
+
+  // ─── Protected page route guards ──────────────────────────────────────────
+  const isAdminPage = !!document.getElementById('adminDashboard') ||
+                      document.title.includes('Admin') && document.querySelector('.dash-layout');
+  const isCustomerBookingsPage = !!document.getElementById('customerBookingsPage') ||
+                                  document.title.includes('My Bookings');
+  const isRestaurantPage = !!document.getElementById('restaurantDashboard') ||
+                            document.title.includes('Restaurant Dashboard') ||
+                            document.title.includes('Kitchen Dashboard');
+
+  if (isAdminPage) {
+    // Admin pages: verify server-side that user has admin role
+    await requireAdmin('login.html');
+  } else if (isCustomerBookingsPage) {
+    // Customer bookings: require any authenticated user
+    await requireAuth('login.html');
+  } else if (isRestaurantPage) {
+    // Restaurant dashboard: require restaurant role
+    await requireRestaurant('login.html');
   }
 });
 

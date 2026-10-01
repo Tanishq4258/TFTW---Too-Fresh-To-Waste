@@ -3,28 +3,30 @@ Custom User model for Too Fresh To Waste.
 
 Extends AbstractBaseUser to support:
   - Email as the login identifier (not username)
-  - Account types: customer / business
+  - Account types: customer / business / restaurant / admin
   - First & Last name (matching the signup form)
-
-Expandable later for: profile photo, phone, address, business details, etc.
+  - Email verification
+  - Google OAuth identity
 """
 
+import secrets
+from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin,
 )
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
     """Custom manager — email is the unique identifier instead of username."""
 
-    def create_user(self, email, password, first_name, last_name, account_type='customer', **extra_fields):
+    def create_user(self, email, password=None, first_name='', last_name='', account_type='customer', **extra_fields):
         if not email:
             raise ValueError('Email address is required.')
-        if not password:
-            raise ValueError('Password is required.')
+        
         email = self.normalize_email(email)
         user = self.model(
             email=email,
@@ -33,7 +35,10 @@ class UserManager(BaseUserManager):
             account_type=account_type,
             **extra_fields,
         )
-        user.set_password(password)  # Hashes via Django's PBKDF2
+        if password:
+            user.set_password(password)  # Hashes via Django's PBKDF2
+        else:
+            user.set_unusable_password()
         user.save(using=self._db)
         return user
 
@@ -41,6 +46,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('email_verified', True)
 
         if not extra_fields.get('is_staff'):
             raise ValueError('Superuser must have is_staff=True.')
@@ -59,7 +65,11 @@ class User(AbstractBaseUser, PermissionsMixin):
       - last_name
       - email       (login identifier)
       - password    (hashed by Django)
-      - account_type (customer | business)
+      - account_type (customer | business | restaurant | admin)
+
+    Additional auth fields:
+      - email_verified  (must verify before full access)
+      - google_id       (for Google OAuth linking)
     """
 
     ACCOUNT_TYPE_CHOICES = [
@@ -79,6 +89,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=ACCOUNT_TYPE_CHOICES,
         default='customer',
     )
+
+    # ── Email verification ─────────────────────────────────────────────────────
+    email_verified = models.BooleanField(default=False, db_index=True)
+
+    # ── Google OAuth ───────────────────────────────────────────────────────────
+    google_id = models.CharField(max_length=128, blank=True, default='', db_index=True)
+
+    # ── Timestamps ─────────────────────────────────────────────────────────────
+    updated_at = models.DateTimeField(auto_now=True)
 
     # ── Django internals ───────────────────────────────────────────────────────
     is_active = models.BooleanField(default=True)
@@ -117,3 +136,91 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_admin_user(self):
         return self.account_type == 'admin' or self.is_staff or self.is_superuser
+
+
+# ─── Email Verification Token ─────────────────────────────────────────────────
+
+def _default_verification_expiry():
+    return timezone.now() + timedelta(hours=24)
+
+
+class EmailVerificationToken(models.Model):
+    """
+    Cryptographically secure, single-use, expiring email verification token.
+    One active token per user (old tokens are invalidated on new generation).
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='verification_tokens',
+    )
+    token = models.CharField(max_length=128, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=_default_verification_expiry)
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'email_verification_tokens'
+        verbose_name = 'Email Verification Token'
+
+    def __str__(self):
+        return f'VerifToken({self.user.email}, used={self.used})'
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_valid(self):
+        return not self.used and not self.is_expired
+
+    @classmethod
+    def create_for_user(cls, user):
+        """Invalidate all previous tokens and create a fresh one."""
+        cls.objects.filter(user=user, used=False).update(used=True)
+        token_value = secrets.token_urlsafe(48)
+        return cls.objects.create(user=user, token=token_value)
+
+
+# ─── Password Reset Token ──────────────────────────────────────────────────────
+
+def _default_reset_expiry():
+    return timezone.now() + timedelta(hours=2)
+
+
+class PasswordResetToken(models.Model):
+    """
+    Cryptographically secure, single-use, expiring password reset token.
+    Expires in 2 hours. Single-use enforced via 'used' flag.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='password_reset_tokens',
+    )
+    token = models.CharField(max_length=128, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=_default_reset_expiry)
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'password_reset_tokens'
+        verbose_name = 'Password Reset Token'
+
+    def __str__(self):
+        return f'ResetToken({self.user.email}, used={self.used})'
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_valid(self):
+        return not self.used and not self.is_expired
+
+    @classmethod
+    def create_for_user(cls, user):
+        """Invalidate all previous reset tokens and create a fresh one."""
+        cls.objects.filter(user=user, used=False).update(used=True)
+        token_value = secrets.token_urlsafe(48)
+        return cls.objects.create(user=user, token=token_value)

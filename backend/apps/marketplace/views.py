@@ -27,6 +27,48 @@ from .realtime import broadcast_marketplace_event
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+import re
+
+def _expire_stale_listings():
+    """
+    Finds active listings that were created on a previous day OR whose 
+    pickup time has finished today, and marks them as 'expired'.
+    """
+    now = timezone.localtime(timezone.now())
+    today_date = now.date()
+    current_hour = now.hour
+    current_min = now.minute
+
+    active_listings = FoodListing.objects.filter(status='active')
+    to_update = []
+    
+    for listing in active_listings:
+        listing_date = timezone.localtime(listing.created_at).date()
+        expired = False
+        
+        if listing_date < today_date:
+            expired = True
+        else:
+            match = re.search(r'(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?', str(listing.pickup_end))
+            if match:
+                h = int(match.group(1))
+                m = int(match.group(2))
+                meridiem = match.group(3)
+                if meridiem:
+                    meridiem = meridiem.lower()
+                    if meridiem == 'pm' and h < 12:
+                        h += 12
+                    elif meridiem == 'am' and h == 12:
+                        h = 0
+                if current_hour > h or (current_hour == h and current_min > m):
+                    expired = True
+                    
+        if expired:
+            listing.status = 'expired'
+            to_update.append(listing)
+    
+    if to_update:
+        FoodListing.objects.bulk_update(to_update, ['status'])
 
 
 # ─── RESTAURANT PROFILE VIEWS ──────────────────────────────────────────────────
@@ -89,6 +131,7 @@ class RestaurantDetailView(APIView):
         except Restaurant.DoesNotExist:
             return Response({"error": "Restaurant not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        _expire_stale_listings()
         serializer = RestaurantSerializer(restaurant)
         data = serializer.data
         # Include active listings
@@ -158,6 +201,7 @@ class FoodListingListCreateView(APIView):
         return [IsAuthenticated()]
 
     def get(self, request):
+        _expire_stale_listings()
         qs = FoodListing.objects.filter(status='active', restaurant__status='active')
 
         # Filters
@@ -302,6 +346,7 @@ class MyRestaurantListingsView(APIView):
         if not hasattr(user, 'restaurant_profile'):
             return Response([], status=status.HTTP_200_OK)
 
+        _expire_stale_listings()
         listings = user.restaurant_profile.listings.all().order_by('-created_at')
         serializer = FoodListingSerializer(listings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

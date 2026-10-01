@@ -16,12 +16,14 @@ class RegisterSerializer(serializers.ModelSerializer):
     """
     Maps to the signup form fields:
       first_name, last_name, email, password, confirm_password, account_type, phone
+
+    NOTE: 'admin' is NOT an allowed choice here — admins are created via management command.
     """
     password = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True)
     phone = serializers.CharField(required=False, allow_blank=True, default='')
     account_type = serializers.ChoiceField(
-        choices=['customer', 'business', 'restaurant', 'admin'],
+        choices=['customer', 'business', 'restaurant'],  # admin NOT allowed via signup
         default='customer',
     )
 
@@ -60,6 +62,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data['last_name'],
             phone=validated_data.get('phone', ''),
             account_type=account_type,
+            email_verified=False,  # Must verify via email
         )
 
         # If restaurant, auto-create their initial Restaurant profile
@@ -97,6 +100,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['account_type'] = user.account_type
         token['is_staff'] = user.is_staff
         token['is_superuser'] = user.is_superuser
+        token['email_verified'] = user.email_verified
         return token
 
     def validate(self, attrs):
@@ -126,6 +130,7 @@ class UserSerializer(serializers.ModelSerializer):
             'account_type',
             'is_staff',
             'is_superuser',
+            'email_verified',
             'restaurant_id',
             'date_joined',
             'last_login',
@@ -140,3 +145,30 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.restaurant_profile.id
         return None
 
+
+# ─── Password Reset ────────────────────────────────────────────────────────────
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    password = serializers.CharField(min_length=8, write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
+        validate_password(attrs['password'])
+        return attrs
+
+
+# ─── Email Verification ────────────────────────────────────────────────────────
+
+class VerifyEmailSerializer(serializers.Serializer):
+    token = serializers.CharField()
+
+
+class ResendVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
