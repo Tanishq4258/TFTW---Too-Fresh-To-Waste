@@ -190,6 +190,62 @@
     async getAdminAnalytics() {
       return this.request('/admin/analytics/');
     },
+
+    // ─── Razorpay Payments ───────────────────────────────────────────────────
+
+    async getPaymentConfig() {
+      return this.request('/payments/config/');
+    },
+
+    async createPaymentOrder(listingId, quantity, notes = '') {
+      return this.request('/payments/create-order/', {
+        method: 'POST',
+        body: {
+          listing_id: listingId,
+          quantity: quantity,
+          notes: notes,
+        },
+      });
+    },
+
+    async verifyPayment(verificationPayload) {
+      return this.request('/payments/verify/', {
+        method: 'POST',
+        body: verificationPayload,
+      });
+    },
+
+    async reportPaymentFailure(failurePayload) {
+      return this.request('/payments/failure/', {
+        method: 'POST',
+        body: failurePayload,
+      });
+    },
+
+    async retryPayment(bookingId) {
+      return this.request('/payments/retry/', {
+        method: 'POST',
+        body: { booking_id: bookingId },
+      });
+    },
+
+    async adminRefund(bookingId, reason = '') {
+      return this.request('/payments/refund/', {
+        method: 'POST',
+        body: {
+          booking_id: bookingId,
+          reason: reason,
+        },
+      });
+    },
+
+    async getAdminPayments(statusFilter, search) {
+      const qs = new URLSearchParams();
+      if (statusFilter) qs.set('status', statusFilter);
+      if (search) qs.set('search', search);
+      const query = qs.toString() ? `?${qs.toString()}` : '';
+      return this.request(`/payments/admin/all/${query}`);
+    },
   };
 
   window.API = API;

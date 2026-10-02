@@ -118,6 +118,13 @@ class BookingSerializer(serializers.ModelSerializer):
             'status',
             'payment_status',
             'payment_method',
+            'razorpay_order_id',
+            'razorpay_payment_id',
+            'payment_timestamp',
+            'refund_id',
+            'refund_status',
+            'refund_amount',
+            'refunded_at',
             'pickup_start',
             'pickup_end',
             'pickup_code',
@@ -134,12 +141,20 @@ class BookingSerializer(serializers.ModelSerializer):
             'listing',
             'unit_price',
             'total_amount',
+            'razorpay_order_id',
+            'razorpay_payment_id',
+            'payment_timestamp',
+            'refund_id',
+            'refund_status',
+            'refund_amount',
+            'refunded_at',
             'pickup_start',
             'pickup_end',
             'pickup_code',
             'created_at',
             'updated_at',
         )
+
 
 
 class CreateBookingSerializer(serializers.Serializer):

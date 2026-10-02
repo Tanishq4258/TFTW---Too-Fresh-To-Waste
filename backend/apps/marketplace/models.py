@@ -199,9 +199,13 @@ class Booking(models.Model):
     ]
 
     PAYMENT_STATUS_CHOICES = [
+        ('ORDER_CREATED', 'Order Created'),
         ('PAYMENT_PENDING', 'Payment Pending'),
+        ('PAID', 'Paid'),
         ('PAYMENT_SUCCESS', 'Payment Success'),
         ('PAYMENT_FAILED', 'Payment Failed'),
+        ('CANCELLED', 'Cancelled'),
+        ('REFUND_PENDING', 'Refund Pending'),
         ('REFUNDED', 'Refunded'),
     ]
 
@@ -238,16 +242,29 @@ class Booking(models.Model):
     status = models.CharField(
         max_length=25,
         choices=STATUS_CHOICES,
-        default='CONFIRMED',
+        default='PENDING',
         db_index=True,
     )
     payment_status = models.CharField(
         max_length=25,
         choices=PAYMENT_STATUS_CHOICES,
-        default='PAYMENT_SUCCESS',
+        default='PAYMENT_PENDING',
         db_index=True,
     )
-    payment_method = models.CharField(max_length=30, default='UPI')
+    payment_method = models.CharField(max_length=30, default='Razorpay')
+    
+    # Razorpay Transaction & Verification Fields
+    razorpay_order_id = models.CharField(max_length=100, blank=True, default='', db_index=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, default='', db_index=True)
+    razorpay_signature = models.CharField(max_length=255, blank=True, default='')
+    payment_timestamp = models.DateTimeField(null=True, blank=True)
+    
+    # Refund Tracking
+    refund_id = models.CharField(max_length=100, blank=True, default='', db_index=True)
+    refund_status = models.CharField(max_length=30, blank=True, default='')
+    refund_amount = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    refunded_at = models.DateTimeField(null=True, blank=True)
+
     pickup_start = models.CharField(max_length=50, blank=True)
     pickup_end = models.CharField(max_length=50, blank=True)
     pickup_code = models.CharField(max_length=10, blank=True)
@@ -255,6 +272,11 @@ class Booking(models.Model):
     cancellation_reason = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def is_paid(self):
+        return self.payment_status in ('PAID', 'PAYMENT_SUCCESS')
+
 
     class Meta:
         db_table = 'bookings'

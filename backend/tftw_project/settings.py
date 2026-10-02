@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     # Local
     'apps.accounts',
     'apps.marketplace',
+    'apps.payments',
 ]
 
 MIDDLEWARE = [
@@ -209,3 +210,11 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# ─── Razorpay Configuration ───────────────────────────────────────────────────
+# Keys read from environment variables; never hardcoded
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', '')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', '')
+RAZORPAY_WEBHOOK_SECRET = os.getenv('RAZORPAY_WEBHOOK_SECRET', '')
+RAZORPAY_CURRENCY = 'INR'
+

@@ -144,6 +144,7 @@
     </div>
   </main>
 
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/realtime.js"></script>
@@ -205,30 +206,95 @@
                             b.status === 'COMPLETED' ? 'badge-completed' :
                             b.status === 'CANCELLED' ? 'badge-cancelled' : 'badge-pending';
 
-        const canCancel = b.status === 'PENDING' || b.status === 'CONFIRMED';
+        const isPaid = b.payment_status === 'PAID' || b.payment_status === 'PAYMENT_SUCCESS';
+        const isPendingPayment = (b.payment_status === 'PAYMENT_PENDING' || b.payment_status === 'PAYMENT_FAILED') && b.status !== 'CANCELLED';
+        const canCancel = (b.status === 'PENDING' || b.status === 'CONFIRMED') && !b.refund_status;
+
+        const payBadge = isPaid
+          ? `<span class="badge" style="background:#D1FAE5; color:#065F46;">PAID ✓</span>`
+          : b.payment_status === 'REFUNDED'
+          ? `<span class="badge" style="background:#FEE2E2; color:#991B1B;">REFUNDED</span>`
+          : `<span class="badge" style="background:#FEF3C7; color:#92400E;">${(b.payment_status || 'PENDING').replace(/_/g, ' ')}</span>`;
 
         return `
           <article class="booking-card" id="bookingCard-${b.id}">
             <img class="booking-card-img" src="${b.listing_image || 'assets/images/bakery_box.jpg'}" alt="${b.listing_name}" onerror="this.src='assets/images/bakery_box.jpg'"/>
             <div class="booking-card-info">
-              <div style="font-size:0.75rem; color:#888; font-weight:700; margin-bottom:2px;">ORDER #${b.booking_number}</div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span style="font-size:0.75rem; color:#888; font-weight:700;">ORDER #${b.booking_number}</span>
+                ${payBadge}
+              </div>
               <h3>${b.listing_name}</h3>
               <div class="booking-card-meta">
                 <span>📍 <strong>${b.restaurant_name}</strong> · ${b.restaurant_address}</span>
                 <span>⏰ Pickup Window: <strong>${b.pickup_start} – ${b.pickup_end}</strong></span>
                 <span>📦 Quantity: <strong>${b.quantity} box(es)</strong></span>
+                ${b.razorpay_payment_id ? `<span style="font-size:0.78rem; color:#64748B;">💳 Razorpay Ref: <code>${b.razorpay_payment_id}</code></span>` : ''}
+                ${b.refund_id ? `<span style="font-size:0.78rem; color:#DC2626;">↩️ Refund ID: <code>${b.refund_id}</code></span>` : ''}
               </div>
               <div class="pickup-code-box">Pickup Verification PIN: ${b.pickup_code || '----'}</div>
             </div>
             <div class="booking-card-side">
               <span class="badge ${statusClass}">${b.status.replace(/_/g, ' ')}</span>
               <div class="booking-amount">₹${parseFloat(b.total_amount).toFixed(2)}</div>
+              ${isPendingPayment ? `
+                <button class="btn btn-primary btn-sm" onclick="retryOrderPayment(${b.id})" style="font-size:0.8rem; padding:6px 12px;">⚡ Pay Now (Razorpay)</button>
+              ` : ''}
               ${canCancel ? `<button class="btn btn-outline btn-sm" onclick="cancelBooking(${b.id})" style="color:#E74C3C; border-color:#F5B7B1;">Cancel Order</button>` : ''}
             </div>
           </article>
         `;
       }).join('');
     }
+
+    async function retryOrderPayment(bookingId) {
+      const res = await API.retryPayment(bookingId);
+      if (!res.ok || !res.data) {
+        alert(res.data?.error || 'Unable to retry payment.');
+        return;
+      }
+
+      const orderData = res.data;
+      if (typeof window.Razorpay === 'undefined') {
+        alert('Razorpay Checkout SDK is still loading. Please refresh and try again.');
+        return;
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount_paise,
+        currency: orderData.currency || 'INR',
+        name: 'Too Fresh To Waste',
+        description: `Order #${orderData.booking_number} - ${orderData.listing.name}`,
+        image: 'assets/images/hero_food.jpg',
+        order_id: orderData.razorpay_order_id,
+        prefill: {
+          name: orderData.customer.name,
+          email: orderData.customer.email,
+          contact: orderData.customer.phone || '',
+        },
+        theme: { color: '#FF788D' },
+        handler: async function (paymentResp) {
+          const verifyRes = await API.verifyPayment({
+            booking_id: orderData.booking_id,
+            razorpay_order_id: paymentResp.razorpay_order_id,
+            razorpay_payment_id: paymentResp.razorpay_payment_id,
+            razorpay_signature: paymentResp.razorpay_signature,
+          });
+
+          if (verifyRes.ok) {
+            Realtime.notify('Payment Confirmed!', `Order #${orderData.booking_number} is now PAID!`, 'success');
+            loadBookings();
+          } else {
+            alert(verifyRes.data?.error || 'Payment verification failed.');
+          }
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    }
+
 
     async function cancelBooking(id) {
       if (!confirm('Are you sure you want to cancel this reservation? The inventory will be released back to the store.')) return;

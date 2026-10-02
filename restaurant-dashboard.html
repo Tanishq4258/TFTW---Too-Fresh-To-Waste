@@ -484,6 +484,13 @@
           actionBtns = `<span style="font-size:0.75rem; color:#888;">No actions</span>`;
         }
 
+        const isPaid = b.payment_status === 'PAID' || b.payment_status === 'PAYMENT_SUCCESS';
+        const payTag = isPaid 
+          ? `<span style="display:inline-block; font-size:10px; background:#D1FAE5; color:#065F46; padding:1px 6px; border-radius:4px; font-weight:700; margin-left:4px;">PAID ✓</span>`
+          : b.payment_status === 'REFUNDED'
+          ? `<span style="display:inline-block; font-size:10px; background:#FEE2E2; color:#991B1B; padding:1px 6px; border-radius:4px; font-weight:700; margin-left:4px;">REFUNDED</span>`
+          : `<span style="display:inline-block; font-size:10px; background:#FEF3C7; color:#92400E; padding:1px 6px; border-radius:4px; font-weight:700; margin-left:4px;">${b.payment_status || 'PENDING'}</span>`;
+
         return `
           <tr>
             <td><strong>#${b.booking_number}</strong></td>
@@ -491,7 +498,10 @@
             <td>${b.customer_phone || b.customer_email || '—'}</td>
             <td>${b.listing_name}</td>
             <td><strong>${b.quantity}</strong></td>
-            <td><strong>₹${parseFloat(b.total_amount).toFixed(2)}</strong></td>
+            <td>
+              <strong>₹${parseFloat(b.total_amount).toFixed(2)}</strong>
+              ${payTag}
+            </td>
             <td>${b.pickup_start} – ${b.pickup_end}</td>
             <td><code style="background:#FFF0F2; color:#FF788D; padding:2px 6px; border-radius:4px; font-weight:800;">${b.pickup_code || '----'}</code></td>
             <td><span class="badge ${badgeClass}">${b.status.replace(/_/g, ' ')}</span></td>

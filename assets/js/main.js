@@ -793,7 +793,7 @@ window.openFoodModalById = function (id) {
 
   currentModalListing = listing;
   currentModalQty = 1;
-  currentPayMethod = 'UPI';
+  currentPayMethod = 'RAZORPAY';
 
   document.getElementById('resModalTitle').textContent = listing.name;
   document.getElementById('resModalFoodName').textContent = listing.name;
@@ -807,10 +807,10 @@ window.openFoodModalById = function (id) {
   document.getElementById('resModalRemaining').textContent = `${listing.quantity_available} available`;
   document.getElementById('resModalQtyVal').textContent = '1';
 
-  // Reset payment selection to UPI
+  // Reset payment selection to Razorpay
   document.querySelectorAll('input[name="payMethod"]').forEach(r => {
-    r.checked = r.value === 'UPI';
-    r.parentElement.classList.toggle('active', r.value === 'UPI');
+    r.checked = r.value === 'RAZORPAY';
+    r.parentElement.classList.toggle('active', r.value === 'RAZORPAY');
   });
 
   const errEl = document.getElementById('bookingErrorNotice');
@@ -822,7 +822,7 @@ window.openFoodModalById = function (id) {
   const footer = document.getElementById('resModalFooter');
   footer.innerHTML = `
     <button type="button" class="btn btn-outline" onclick="closeFoodModal()">Cancel</button>
-    <button type="button" class="btn btn-primary" id="confirmReservationBtn">Book &amp; Reserve Now ✓</button>
+    <button type="button" class="btn btn-primary" id="confirmReservationBtn">Pay &amp; Reserve Now ✓</button>
   `;
   document.getElementById('confirmReservationBtn').addEventListener('click', handleConfirmReservation);
 
@@ -876,6 +876,65 @@ function initModalListeners() {
   });
 }
 
+function renderSuccessConfirmation(booking) {
+  const body = document.getElementById('resModalBody');
+  body.innerHTML = `
+    <div style="text-align:center; padding:10px 0 20px;">
+      <div style="width:64px; height:64px; background:#D1FAE5; color:#10B981; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:32px; margin-bottom:14px;">
+        ✓
+      </div>
+      <h4 style="font-size:1.4rem; font-weight:800; color:#1E293B; margin-bottom:4px;">Reservation Confirmed!</h4>
+      <p style="color:#64748B; font-size:0.9rem; margin-bottom:20px;">
+        ${booking.payment_status === 'PAID' ? 'Your payment has been securely verified via Razorpay.' : 'Your food box has been successfully locked and reserved.'}
+      </p>
+
+      <div style="background:#F8FAFC; border:2px dashed #CBD5E1; border-radius:var(--radius-lg); padding:18px; text-align:left; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span style="color:#64748B; font-size:0.85rem;">Booking Reference:</span>
+          <strong style="color:var(--color-primary); font-size:1.05rem;">#${booking.booking_number}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span style="color:#64748B; font-size:0.85rem;">Food Item:</span>
+          <strong>${booking.quantity}x ${booking.listing_name}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span style="color:#64748B; font-size:0.85rem;">Amount:</span>
+          <strong style="color:${booking.payment_status === 'PAID' ? '#10B981' : 'inherit'};">
+            ₹${parseFloat(booking.total_amount).toFixed(2)} ${booking.payment_status === 'PAID' ? '(PAID)' : ''}
+          </strong>
+        </div>
+        ${booking.razorpay_payment_id ? `
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span style="color:#64748B; font-size:0.85rem;">Payment Reference:</span>
+          <code style="font-size:0.82rem; color:#475569;">${booking.razorpay_payment_id}</code>
+        </div>
+        ` : ''}
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span style="color:#64748B; font-size:0.85rem;">Pickup Time:</span>
+          <strong style="color:#2563EB;">${booking.pickup_start} – ${booking.pickup_end}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding-top:10px; border-top:1px solid #E2E8F0; align-items:center;">
+          <span style="color:#64748B; font-size:0.85rem;">Verification PIN:</span>
+          <code style="background:var(--color-primary-light); color:var(--color-primary); padding:4px 10px; border-radius:6px; font-weight:800; font-size:1.1rem;">${booking.pickup_code || '----'}</code>
+        </div>
+      </div>
+
+      <p style="font-size:0.8rem; color:#888;">Show your Verification PIN at the counter during the pickup window to collect your food.</p>
+    </div>
+  `;
+
+  document.getElementById('resModalFooter').innerHTML = `
+    <a href="customer-bookings.html" class="btn btn-primary" style="width:100%; text-align:center;">View in My Bookings →</a>
+  `;
+
+  if (window.Realtime) {
+    window.Realtime.notify('Reservation Placed!', `Reserved ${booking.quantity}x ${booking.listing_name} (Order #${booking.booking_number})`, 'success');
+  }
+
+  // Refresh marketplace listings to reflect decreased stock
+  loadMarketplaceListings();
+}
+
 async function handleConfirmReservation() {
   if (!window.Auth || !window.Auth.isLoggedIn()) {
     alert('Please log in or create an account to book surplus food!');
@@ -886,79 +945,170 @@ async function handleConfirmReservation() {
   const btn = document.getElementById('confirmReservationBtn');
   const errEl = document.getElementById('bookingErrorNotice');
   btn.disabled = true;
-  btn.textContent = 'Reserving in database...';
+  btn.textContent = 'Processing request...';
   if (errEl) errEl.style.display = 'none';
 
-  const payload = {
-    listing_id: currentModalListing.id,
-    quantity: currentModalQty,
-    payment_method: currentPayMethod,
-    notes: 'Pick up via customer app',
-  };
+  // If CASH_ON_PICKUP is chosen
+  if (currentPayMethod === 'CASH_ON_PICKUP') {
+    btn.textContent = 'Reserving food in database...';
+    const payload = {
+      listing_id: currentModalListing.id,
+      quantity: currentModalQty,
+      payment_method: 'CASH_ON_PICKUP',
+      notes: 'Cash on pickup via customer app',
+    };
 
-  const res = await window.API.createBooking(payload);
-  btn.disabled = false;
-  btn.textContent = 'Book & Reserve Now ✓';
+    const res = await window.API.createBooking(payload);
+    btn.disabled = false;
+    btn.textContent = 'Pay & Reserve Now ✓';
 
-  if (res.ok && res.data) {
-    const booking = res.data;
-    // Show confirmation inside modal
-    const body = document.getElementById('resModalBody');
-    body.innerHTML = `
-      <div style="text-align:center; padding:10px 0 20px;">
-        <div style="width:64px; height:64px; background:#D1FAE5; color:#10B981; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:32px; margin-bottom:14px;">
-          ✓
-        </div>
-        <h4 style="font-size:1.4rem; font-weight:800; color:#1E293B; margin-bottom:4px;">Reservation Confirmed!</h4>
-        <p style="color:#64748B; font-size:0.9rem; margin-bottom:20px;">Your food box has been successfully locked and reserved.</p>
-
-        <div style="background:#F8FAFC; border:2px dashed #CBD5E1; border-radius:var(--radius-lg); padding:18px; text-align:left; margin-bottom:20px;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <span style="color:#64748B; font-size:0.85rem;">Booking Reference:</span>
-            <strong style="color:var(--color-primary); font-size:1.05rem;">#${booking.booking_number}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <span style="color:#64748B; font-size:0.85rem;">Food Item:</span>
-            <strong>${booking.quantity}x ${booking.listing_name}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <span style="color:#64748B; font-size:0.85rem;">Amount:</span>
-            <strong>₹${parseFloat(booking.total_amount).toFixed(2)}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <span style="color:#64748B; font-size:0.85rem;">Pickup Time:</span>
-            <strong style="color:#2563EB;">${booking.pickup_start} – ${booking.pickup_end}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; padding-top:10px; border-top:1px solid #E2E8F0; align-items:center;">
-            <span style="color:#64748B; font-size:0.85rem;">Verification PIN:</span>
-            <code style="background:var(--color-primary-light); color:var(--color-primary); padding:4px 10px; border-radius:6px; font-weight:800; font-size:1.1rem;">${booking.pickup_code || '----'}</code>
-          </div>
-        </div>
-
-        <p style="font-size:0.8rem; color:#888;">Show your Verification PIN at the counter during the pickup window to collect your food.</p>
-      </div>
-    `;
-
-    document.getElementById('resModalFooter').innerHTML = `
-      <a href="customer-bookings.html" class="btn btn-primary" style="width:100%; text-align:center;">View in My Bookings →</a>
-    `;
-
-    if (window.Realtime) {
-      window.Realtime.notify('Reservation Placed!', `Reserved ${booking.quantity}x ${booking.listing_name} (Order #${booking.booking_number})`, 'success');
+    if (res.ok && res.data) {
+      renderSuccessConfirmation(res.data);
+    } else {
+      const errorMsg = res.data?.error || 'Unable to place booking. Item may be out of stock.';
+      if (errEl) {
+        errEl.textContent = errorMsg;
+        errEl.style.display = 'block';
+      } else {
+        alert(errorMsg);
+      }
     }
+    return;
+  }
 
-    // Refresh marketplace listings to reflect decreased stock
-    loadMarketplaceListings();
-  } else {
-    const errorMsg = res.data?.error || 'Unable to place booking. Item may be out of stock.';
+  // ─── RAZORPAY ONLINE PAYMENT FLOW ──────────────────────────────────────────
+  btn.textContent = 'Initializing secure payment gateway...';
+
+  const orderRes = await window.API.createPaymentOrder(
+    currentModalListing.id,
+    currentModalQty,
+    'Surplus food order via customer checkout'
+  );
+
+  if (!orderRes.ok || !orderRes.data) {
+    btn.disabled = false;
+    btn.textContent = 'Pay & Reserve Now ✓';
+    const errMsg = orderRes.data?.error || 'Failed to initiate payment. Please try again.';
     if (errEl) {
-      errEl.textContent = errorMsg;
+      errEl.textContent = errMsg;
       errEl.style.display = 'block';
     } else {
-      alert(errorMsg);
+      alert(errMsg);
     }
+    return;
   }
+
+  const orderData = orderRes.data;
+
+  // Verify Razorpay Checkout SDK is ready
+  if (typeof window.Razorpay === 'undefined') {
+    btn.disabled = false;
+    btn.textContent = 'Pay & Reserve Now ✓';
+    const errMsg = 'Razorpay checkout script failed to load. Please check your internet connection.';
+    if (errEl) {
+      errEl.textContent = errMsg;
+      errEl.style.display = 'block';
+    } else {
+      alert(errMsg);
+    }
+    return;
+  }
+
+  btn.textContent = 'Opening Razorpay Checkout...';
+
+  const options = {
+    key: orderData.key_id,
+    amount: orderData.amount_paise,
+    currency: orderData.currency || 'INR',
+    name: 'Too Fresh To Waste',
+    description: `${currentModalQty}x ${orderData.listing.name}`,
+    image: 'assets/images/hero_food.jpg',
+    order_id: orderData.razorpay_order_id,
+    prefill: {
+      name: orderData.customer.name,
+      email: orderData.customer.email,
+      contact: orderData.customer.phone || '',
+    },
+    notes: {
+      booking_number: orderData.booking_number,
+      booking_id: orderData.booking_id,
+    },
+    theme: {
+      color: '#FF788D',
+    },
+    modal: {
+      ondismiss: async function () {
+        btn.disabled = false;
+        btn.textContent = 'Pay & Reserve Now ✓';
+        if (errEl) {
+          errEl.textContent = 'Payment was cancelled or closed. Click "Pay & Reserve Now" to retry.';
+          errEl.style.display = 'block';
+        }
+        await window.API.reportPaymentFailure({
+          booking_id: orderData.booking_id,
+          razorpay_order_id: orderData.razorpay_order_id,
+          error_code: 'USER_CANCELLED',
+          error_description: 'Checkout modal dismissed by user',
+        });
+      },
+    },
+    handler: async function (paymentResponse) {
+      // Step: Server-side signature verification
+      btn.disabled = true;
+      btn.textContent = 'Verifying payment with bank...';
+      const body = document.getElementById('resModalBody');
+      body.innerHTML = `
+        <div style="text-align:center; padding:36px 10px;">
+          <div style="width:48px; height:48px; border:4px solid #E2E8F0; border-top:4px solid var(--color-primary); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 16px;"></div>
+          <h4 style="font-weight:800; font-size:1.25rem; color:#1E293B; margin-bottom:6px;">Verifying Payment...</h4>
+          <p style="color:#64748B; font-size:0.9rem;">Securing your transaction with bank &amp; confirming your food box.</p>
+        </div>
+      `;
+
+      const verifyRes = await window.API.verifyPayment({
+        booking_id: orderData.booking_id,
+        razorpay_order_id: paymentResponse.razorpay_order_id,
+        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+        razorpay_signature: paymentResponse.razorpay_signature,
+      });
+
+      if (verifyRes.ok && (verifyRes.data.success || verifyRes.data.status === 'already_paid')) {
+        renderSuccessConfirmation(verifyRes.data.booking);
+      } else {
+        const errorDesc = verifyRes.data?.error || 'Payment signature verification failed.';
+        body.innerHTML = `
+          <div style="text-align:center; padding:24px 0;">
+            <div style="width:54px; height:54px; background:#FEE2E2; color:#DC2626; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:12px;">✕</div>
+            <h4 style="font-size:1.25rem; font-weight:800; color:#1E293B; margin-bottom:4px;">Payment Verification Failed</h4>
+            <p style="color:#64748B; font-size:0.9rem; margin-bottom:20px;">${errorDesc}</p>
+            <button class="btn btn-primary" onclick="openFoodModalById(${currentModalListing.id})">Retry Payment</button>
+          </div>
+        `;
+      }
+    },
+  };
+
+  const rzp = new window.Razorpay(options);
+
+  rzp.on('payment.failed', async function (failedResponse) {
+    btn.disabled = false;
+    btn.textContent = 'Retry Payment';
+    const errDesc = failedResponse.error?.description || 'Payment was declined by payment gateway.';
+    if (errEl) {
+      errEl.textContent = `Payment Failed: ${errDesc}`;
+      errEl.style.display = 'block';
+    }
+    await window.API.reportPaymentFailure({
+      booking_id: orderData.booking_id,
+      razorpay_order_id: orderData.razorpay_order_id,
+      error_code: failedResponse.error?.code || 'PAYMENT_FAILED',
+      error_description: errDesc,
+    });
+  });
+
+  rzp.open();
 }
+
 
 function initRealtimeMarketplace() {
   if (!window.Realtime) return;

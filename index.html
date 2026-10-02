@@ -650,19 +650,18 @@
         <!-- Payment Method -->
         <div style="margin-bottom:18px;">
           <label style="font-size:0.85rem; font-weight:700; color:var(--color-text); display:block; margin-bottom:6px;">Payment Method:</label>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-            <label class="cat-pill active" style="text-align:center; padding:8px 4px; font-size:0.8rem; cursor:pointer;" id="payUpiLabel">
-              <input type="radio" name="payMethod" value="UPI" checked style="display:none;" />
-              ⚡ UPI / QR
+          <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:8px;">
+            <label class="cat-pill active" style="text-align:center; padding:10px 8px; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;" id="payRazorpayLabel">
+              <input type="radio" name="payMethod" value="RAZORPAY" checked style="display:none;" />
+              <span>💳 Pay Online (Razorpay)</span>
             </label>
-            <label class="cat-pill" style="text-align:center; padding:8px 4px; font-size:0.8rem; cursor:pointer;" id="payCardLabel">
-              <input type="radio" name="payMethod" value="CARD" style="display:none;" />
-              💳 Card
-            </label>
-            <label class="cat-pill" style="text-align:center; padding:8px 4px; font-size:0.8rem; cursor:pointer;" id="payCashLabel">
+            <label class="cat-pill" style="text-align:center; padding:10px 8px; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;" id="payCashLabel">
               <input type="radio" name="payMethod" value="CASH_ON_PICKUP" style="display:none;" />
-              💵 Cash at Pickup
+              <span>💵 Cash at Pickup</span>
             </label>
+          </div>
+          <div style="font-size:0.75rem; color:#64748B; margin-top:6px; display:flex; align-items:center; gap:4px;">
+            <span>🔒 Secure checkout powered by Razorpay (UPI, GPay, Paytm, Cards, NetBanking)</span>
           </div>
         </div>
 
@@ -677,15 +676,17 @@
 
       <div class="modal-footer" id="resModalFooter">
         <button type="button" class="btn btn-outline" onclick="closeFoodModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" id="confirmReservationBtn">Book &amp; Reserve Now ✓</button>
+        <button type="button" class="btn btn-primary" id="confirmReservationBtn">Pay &amp; Reserve Now ✓</button>
       </div>
     </div>
   </div>
 
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/realtime.js"></script>
   <script src="assets/js/main.js"></script>
+
 </body>
 </html>
 

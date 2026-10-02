@@ -303,14 +303,14 @@
                   <tr>
                     <th>Order #</th>
                     <th>Customer</th>
-                    <th>Customer Phone</th>
                     <th>Restaurant</th>
-                    <th>Item</th>
-                    <th>Qty</th>
+                    <th>Item / Qty</th>
                     <th>Amount</th>
-                    <th>Pickup Window</th>
-                    <th>Status</th>
+                    <th>Payment Status</th>
+                    <th>Razorpay IDs</th>
+                    <th>Order Status</th>
                     <th>Timestamp</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="allAdminOrdersTable">
@@ -533,21 +533,77 @@
         return;
       }
 
-      tbody.innerHTML = res.data.map(b => `
-        <tr>
-          <td><strong>#${b.booking_number}</strong></td>
-          <td>${b.customer_name}</td>
-          <td>${b.customer_phone || b.customer_email || '—'}</td>
-          <td>${b.restaurant_name}</td>
-          <td>${b.listing_name}</td>
-          <td>${b.quantity}</td>
-          <td><strong>₹${parseFloat(b.total_amount).toFixed(2)}</strong></td>
-          <td>${b.pickup_start} – ${b.pickup_end}</td>
-          <td><span class="badge ${getStatusBadge(b.status)}">${b.status.replace(/_/g, ' ')}</span></td>
-          <td>${new Date(b.created_at).toLocaleDateString()} ${new Date(b.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = res.data.map(b => {
+        const isPaid = b.payment_status === 'PAID' || b.payment_status === 'PAYMENT_SUCCESS';
+        const isRefunded = b.payment_status === 'REFUNDED' || b.refund_status === 'REFUNDED';
+        const canRefund = isPaid && !isRefunded;
+
+        const payBadge = isPaid
+          ? `<span class="badge" style="background:#D1FAE5; color:#065F46;">PAID ✓</span>`
+          : isRefunded
+          ? `<span class="badge" style="background:#FEE2E2; color:#991B1B;">REFUNDED</span>`
+          : `<span class="badge" style="background:#FEF3C7; color:#92400E;">${(b.payment_status || 'PENDING').replace(/_/g, ' ')}</span>`;
+
+        const rzpIds = `
+          <div style="font-size:0.75rem; color:#475569; display:flex; flex-direction:column; gap:2px;">
+            ${b.razorpay_order_id ? `<span>Order: <code>${b.razorpay_order_id}</code></span>` : '<span>Order: —</span>'}
+            ${b.razorpay_payment_id ? `<span>Payment: <code>${b.razorpay_payment_id}</code></span>` : '<span>Payment: —</span>'}
+            ${b.refund_id ? `<span style="color:#DC2626;">Refund: <code>${b.refund_id}</code></span>` : ''}
+          </div>
+        `;
+
+        return `
+          <tr>
+            <td><strong>#${b.booking_number}</strong></td>
+            <td>
+              <div style="font-weight:700;">${b.customer_name}</div>
+              <div style="font-size:0.78rem; color:#64748B;">${b.customer_phone || b.customer_email || ''}</div>
+            </td>
+            <td>${b.restaurant_name}</td>
+            <td>${b.quantity}x ${b.listing_name}</td>
+            <td><strong>₹${parseFloat(b.total_amount).toFixed(2)}</strong></td>
+            <td>${payBadge}</td>
+            <td>${rzpIds}</td>
+            <td><span class="badge ${getStatusBadge(b.status)}">${b.status.replace(/_/g, ' ')}</span></td>
+            <td>${new Date(b.created_at).toLocaleDateString()} ${new Date(b.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+            <td>
+              ${canRefund ? `
+                <button class="order-action-btn btn-cancel" onclick="triggerAdminRefund(${b.id}, '${b.booking_number}', '${b.total_amount}')">
+                  ↩ Issue Refund
+                </button>
+              ` : isRefunded ? `
+                <span style="font-size:0.78rem; color:#991B1B; font-weight:700;">Refunded</span>
+              ` : `
+                <span style="font-size:0.78rem; color:#888;">—</span>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
+
+    async function triggerAdminRefund(bookingId, bookingNumber, amount) {
+      const reason = prompt(
+        `Issue full Razorpay refund of ₹${parseFloat(amount).toFixed(2)} for Order #${bookingNumber}?\n\nEnter refund reason:`,
+        'Customer requested refund'
+      );
+      if (reason === null) return;
+
+      const confirmRefund = confirm(
+        `Are you sure you want to process this refund for Order #${bookingNumber}?\n\nThis will trigger the official Razorpay Refund API and restore inventory back to the food listing.`
+      );
+      if (!confirmRefund) return;
+
+      const res = await API.adminRefund(bookingId, reason);
+      if (res.ok && res.data) {
+        Realtime.notify('Refund Processed', `Order #${bookingNumber} was refunded successfully via Razorpay (Refund ID: ${res.data.refund_id})`, 'warning');
+        loadAdminOrders();
+        loadDashboardMetrics();
+      } else {
+        alert(res.data?.error || 'Failed to process refund.');
+      }
+    }
+
 
     async function loadAdminRestaurants() {
       const res = await API.getRestaurants();
